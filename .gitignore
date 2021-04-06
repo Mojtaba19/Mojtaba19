@@ -1,5 +1,5 @@
 .mxproject
 MDK-ARM/*
-!LDM_V2.0.uvprojx
+!Baghyar.uvprojx
 !startup_stm32f429xx.lst
 !startup_stm32f429xx.s
