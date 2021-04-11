@@ -233,6 +233,7 @@ int main(void)
   MX_USART1_UART_Init();
   MX_SPI2_Init();
   MX_TIM2_Init();
+	MX_TIM5_Init();
   MX_I2C2_Init();
   MX_I2C1_Init();
 
@@ -241,35 +242,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 	TH = malloc(2*sizeof(float));
 	DWT_Init();
-
-
-	ssd1306_Init();
-	ssd1306_SetCursor(0,0);
-	ssd1306_draw_bitmap(1, 2, rssiSingal_5, 16, 11);//anten
-  ssd1306_UpdateScreen();
-	ssd1306_draw_bitmap(60, 2, rssiSingal_4, 16, 11);//anten
-  ssd1306_UpdateScreen();
-	ssd1306_draw_bitmap(80, 2, rssiSingal_3, 16, 11);//anten
-  ssd1306_UpdateScreen();
-	ssd1306_draw_bitmap(100, 2, rssiSingal_1, 16, 11);//anten
-  ssd1306_UpdateScreen();
-	ssd1306_draw_bitmap(25, 0, noSignal, 16, 15);//no anten
-  ssd1306_UpdateScreen();
-	ssd1306_draw_bitmap(45, 0, loraSignal_4, 16, 15);//loraSignal_4
-  ssd1306_UpdateScreen();
-
-	ssd1306_draw_bitmap(1, 18, line, 128, 2);//line
-  ssd1306_UpdateScreen();
-
-	ssd1306_draw_bitmap(80, 35, tapOn , 20, 30);//tapOn
-  ssd1306_UpdateScreen();
-
-//	ssd1306_draw_bitmap(1, 20, ldm, 104, 40);//ldm logo
-//  ssd1306_UpdateScreen();
-
-	ssd1306_draw_bitmap(100, 35, tapOff , 20, 30);//tapOff
-  ssd1306_UpdateScreen();
-	
+ssd1306_Init();
 	
 	//	HAL_RTCEx_BKUPWrite(&hrtc,1,8260);
 	//	HAL_RTCEx_BKUPWrite(&hrtc,2,8500);
@@ -403,6 +376,12 @@ int main(void)
 	//*
 	DEBUG("\n\rSMS SETTING...\n\r");
 		SMSSetting();
+	DEBUG("\n\r    --DONE--\n\r");	
+	//*/
+	
+	//*
+	DEBUG("\n\r\n\r");
+		HAL_TIM_Base_Start_IT(&htim5);
 	DEBUG("\n\r    --DONE--\n\r");	
 	//*/
 	
@@ -723,7 +702,9 @@ static void MX_NVIC_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
 /**
+
   * @brief  RTC wakeup interrupt.
   * @param  hrtc pointer to a RTC_HandleTypeDef structure that contains
   *                the configuration information for RTC.
@@ -2076,7 +2057,25 @@ uint8_t JSON2int(char* result, char* raw_input, char* key){
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   /* USER CODE BEGIN Callback 0 */
-
+	if(htim->Instance==TIM5){
+		
+		
+		ssd1306_SetCursor(0,0);
+		ssd1306_draw_bitmap(1, 2, rssiSingal_5, 16, 11);//anten
+		ssd1306_draw_bitmap(60, 2, rssiSingal_4, 16, 11);//anten
+		ssd1306_draw_bitmap(80, 2, rssiSingal_3, 16, 11);//anten
+		ssd1306_draw_bitmap(100, 2, rssiSingal_1, 16, 11);//anten
+		ssd1306_draw_bitmap(25, 0, noSignal, 16, 15);//no anten
+		ssd1306_draw_bitmap(45, 0, loraSignal_4, 16, 15);//loraSignal_4
+		ssd1306_draw_bitmap(1, 18, line, 128, 2);//line
+		ssd1306_draw_bitmap(80, 35, tapOn , 20, 30);//tapOn
+	//	ssd1306_draw_bitmap(1, 20, ldm, 104, 40);//ldm logo
+	//  ssd1306_UpdateScreen();
+		ssd1306_draw_bitmap(100, 35, tapOff , 20, 30);//tapOff
+		ssd1306_UpdateScreen();
+	
+		
+	}
   /* USER CODE END Callback 0 */
   if (htim->Instance == TIM1) {
     HAL_IncTick();
