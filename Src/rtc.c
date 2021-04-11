@@ -29,17 +29,10 @@ RTC_HandleTypeDef hrtc;
 /* RTC init function */
 void MX_RTC_Init(void)
 {
-  /* USER CODE BEGIN RTC_Init 0 */
- #if(__FIRSTTIME_PROGRAMMING__==1)
-  /* USER CODE END RTC_Init 0 */
-
   RTC_TimeTypeDef sTime = {0};
   RTC_DateTypeDef sDate = {0};
   RTC_AlarmTypeDef sAlarm = {0};
 
-  /* USER CODE BEGIN RTC_Init 1 */
- #endif
-  /* USER CODE END RTC_Init 1 */
   /** Initialize RTC Only
   */
   hrtc.Instance = RTC;
@@ -55,7 +48,7 @@ void MX_RTC_Init(void)
   }
 
   /* USER CODE BEGIN Check_RTC_BKUP */
-	#if(__FIRSTTIME_PROGRAMMING__==1)
+  #if(__FIRSTTIME_PROGRAMMING__==1)
   /* USER CODE END Check_RTC_BKUP */
 
   /** Initialize RTC and set the Time and Date
@@ -69,10 +62,10 @@ void MX_RTC_Init(void)
   {
     Error_Handler();
   }
-  sDate.WeekDay = RTC_WEEKDAY_TUESDAY;
-  sDate.Month = RTC_MONTH_FEBRUARY;
+  sDate.WeekDay = RTC_WEEKDAY_MONDAY;
+  sDate.Month = RTC_MONTH_JANUARY;
   sDate.Date = 1;
-  sDate.Year = 1;
+  sDate.Year = 0;
 
   if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN) != HAL_OK)
   {
@@ -110,13 +103,12 @@ void MX_RTC_Init(void)
   }
   /** Enable the WakeUp
   */
- #endif
   __HAL_RTC_WAKEUPTIMER_CLEAR_FLAG(&hrtc, RTC_FLAG_WUTF);
   if (HAL_RTCEx_SetWakeUpTimer_IT(&hrtc, 180, RTC_WAKEUPCLOCK_CK_SPRE_16BITS) != HAL_OK)
   {
     Error_Handler();
   }
-
+	#endif
 }
 
 void HAL_RTC_MspInit(RTC_HandleTypeDef* rtcHandle)

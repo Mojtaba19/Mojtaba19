@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
+  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
   * This software component is licensed by ST under BSD 3-Clause license,
@@ -34,8 +34,11 @@
 #include <time.h>
 #include "dwt_delay.h"
 #include "AM2305.h"
+#include "time.h"
 #include "ee24.h"
 #include "SIM8xx.h"
+#include "ssd1306.h"
+#include "ssd1306_fonts.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -95,8 +98,8 @@ ProcessProgram;
 //#define 	phone										"+989362117764"	// Hasan agha
 //#define		phone											"+989125572257"
 //#define		phone2										"+989213106616"
-#define 	phone											"+989128504339"
-//#define 	phone											"+989395676056"
+//#define 	phone											"+989128504339"
+#define 	phone											"+989395676056"
 //#define   Buttons_number						2
 /* USER CODE END PD */
 
@@ -108,6 +111,8 @@ ProcessProgram;
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+
+
 uint8_t									isConnect=1;										// Determines the connection status. 1 means connected
 uint16_t								myID = 2;												// This is the landID
 char										ContentStr[size],str[size];			// Two general strings used in some functions as string buffers
@@ -191,7 +196,6 @@ uint8_t						JSON2Str_nested(char* result, char* raw_input, char* key_parent, ch
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
 /* USER CODE END 0 */
 
 /**
@@ -228,14 +232,44 @@ int main(void)
   MX_UART4_Init();
   MX_USART1_UART_Init();
   MX_SPI2_Init();
-  MX_I2C1_Init();
   MX_TIM2_Init();
+  MX_I2C2_Init();
+  MX_I2C1_Init();
 
   /* Initialize interrupts */
   MX_NVIC_Init();
   /* USER CODE BEGIN 2 */
 	TH = malloc(2*sizeof(float));
 	DWT_Init();
+
+
+	ssd1306_Init();
+	ssd1306_SetCursor(0,0);
+	ssd1306_draw_bitmap(1, 2, rssiSingal_5, 16, 11);//anten
+  ssd1306_UpdateScreen();
+	ssd1306_draw_bitmap(60, 2, rssiSingal_4, 16, 11);//anten
+  ssd1306_UpdateScreen();
+	ssd1306_draw_bitmap(80, 2, rssiSingal_3, 16, 11);//anten
+  ssd1306_UpdateScreen();
+	ssd1306_draw_bitmap(100, 2, rssiSingal_1, 16, 11);//anten
+  ssd1306_UpdateScreen();
+	ssd1306_draw_bitmap(25, 0, noSignal, 16, 15);//no anten
+  ssd1306_UpdateScreen();
+	ssd1306_draw_bitmap(45, 0, loraSignal_4, 16, 15);//loraSignal_4
+  ssd1306_UpdateScreen();
+
+	ssd1306_draw_bitmap(1, 18, line, 128, 2);//line
+  ssd1306_UpdateScreen();
+
+	ssd1306_draw_bitmap(80, 35, tapOn , 20, 30);//tapOn
+  ssd1306_UpdateScreen();
+
+//	ssd1306_draw_bitmap(1, 20, ldm, 104, 40);//ldm logo
+//  ssd1306_UpdateScreen();
+
+	ssd1306_draw_bitmap(100, 35, tapOff , 20, 30);//tapOff
+  ssd1306_UpdateScreen();
+	
 	
 	//	HAL_RTCEx_BKUPWrite(&hrtc,1,8260);
 	//	HAL_RTCEx_BKUPWrite(&hrtc,2,8500);
@@ -307,7 +341,7 @@ int main(void)
 	
 #endif
 
-	//*/
+	/*
 	DEBUG("\n\rAPPLYING LAST OUTPUT STATUS...");
 		HAL_Delay(500);
 		processFlag=HAL_RTCEx_BKUPRead(&hrtc, LAST_PROCESS_FLAG_STATUS);
@@ -317,8 +351,8 @@ int main(void)
 	
 	DEBUG("\n\rREADING FLOW1 AND FLOW2 FROM MEMORY...");
 		HAL_Delay(500);
-		Flow1 = HAL_RTCEx_BKUPRead(&hrtc,1);	
-		Flow2 = HAL_RTCEx_BKUPRead(&hrtc,2);	
+		Flow1=HAL_RTCEx_BKUPRead(&hrtc,1);	
+		Flow2=HAL_RTCEx_BKUPRead(&hrtc,2);	
 	DEBUG("\n\r    --DONE--\n\r");	
 	//*/
 	
@@ -347,7 +381,7 @@ int main(void)
 	DEBUG("\n\r    --DONE--\n\r");	
 	//*/
 		
-	//*
+	/*
 	DEBUG("\n\rGETTING ID BY SERIAL NUMBER...\n\r");
 		if(isConnect==1)
 			myID = GetID();
@@ -372,14 +406,14 @@ int main(void)
 	DEBUG("\n\r    --DONE--\n\r");	
 	//*/
 	
-	//*
+	/*
 	DEBUG("\n\rSENDING SMS...\n\r");
 		HAL_Delay(500);
 		sim80x_SendSMS(phone,__WELCOME_TEXT,6000);
 	DEBUG("\n\r    --DONE--\n\r");	
 	//*/
 	
-	//*	
+	/*	
 	DEBUG("\n\rGETTING ALL PROGRAMS FROM SERVER...\n\r");
 		HAL_Delay(500);
 		if(isConnect==1){
@@ -389,7 +423,7 @@ int main(void)
 	DEBUG("\n\r    --DONE--\n\r");	
 	//*/
 
-	//*
+	/*
 	DEBUG("\n\rSETTING NEXT ALARM...");
 		HAL_Delay(500);
 		updatePrograms();
@@ -398,7 +432,7 @@ int main(void)
 	DEBUG("\n\r    --DONE--\n\r");	
 	//*/
 	
-	//*
+	
 	DEBUG("\n\rGETTING ALL PROCESS PROGRAMS FROM SERVER...\n\r");
 		HAL_Delay(500);
 		if(isConnect==1)
@@ -457,7 +491,7 @@ int main(void)
 	
 	DEBUG("\n\r  <<< INITIALIZING DONE >>>\n\r");
 	HAL_Delay(1000);
-	
+		
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -618,12 +652,13 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE|RCC_OSCILLATORTYPE_LSE;
-  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSE;
   RCC_OscInitStruct.LSEState = RCC_LSE_ON;
+  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLM = 4;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+  RCC_OscInitStruct.PLL.PLLM = 8;
   RCC_OscInitStruct.PLL.PLLN = 180;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 4;
@@ -688,7 +723,6 @@ static void MX_NVIC_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
 /**
   * @brief  RTC wakeup interrupt.
   * @param  hrtc pointer to a RTC_HandleTypeDef structure that contains
@@ -2028,6 +2062,7 @@ uint8_t JSON2int(char* result, char* raw_input, char* key){
 	cJSON_Delete(server_response);
 	return 0;
 }
+
 /* USER CODE END 4 */
 
  /**
@@ -2059,10 +2094,7 @@ void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
-  __disable_irq();
-  while (1)
-  {
-  }
+	DEBUG("\n\rERROR HANDLER\n\r");
   /* USER CODE END Error_Handler_Debug */
 }
 
@@ -2078,7 +2110,7 @@ void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+     tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
