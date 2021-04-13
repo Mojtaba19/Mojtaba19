@@ -115,7 +115,7 @@ ProcessProgram;
 
 uint8_t									isConnect=1;										// Determines the connection status. 1 means connected
 uint16_t								myID = 2;												// This is the landID
-char										ContentStr[size],str[size];			// Two general strings used in some functions as string buffers
+char										ContentStr[size],str[size],oledStr[size];			// Two general strings used in some functions as string buffers
 char										SMStext[120];										// The text we want to send
 uint32_t								counter;												// Used in flow meter
 
@@ -257,7 +257,9 @@ ssd1306_Init();
 	DEBUG("\n\r*               Made in I.R.Iran               *");
 	DEBUG("\n\r*                                              *");
 	DEBUG("\n\r************************************************\n\r");
-
+	DEBUG("\n\r\n\r");
+	HAL_TIM_Base_Start_IT(&htim5);
+//	DEBUG("\n\r    --DONE--\n\r");
 #if(__FIRSTTIME_PROGRAMMING__==1)		
 	//*
 	DEBUG("\n\rSETTING DATE AND TIME...");	
@@ -380,9 +382,7 @@ ssd1306_Init();
 	//*/
 	
 	//*
-	DEBUG("\n\r\n\r");
-		HAL_TIM_Base_Start_IT(&htim5);
-	DEBUG("\n\r    --DONE--\n\r");	
+	
 	//*/
 	
 	/*
@@ -2058,20 +2058,24 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   /* USER CODE BEGIN Callback 0 */
 	if(htim->Instance==TIM5){
-		
-		
+		HAL_RTC_GetTime(&hrtc, &Time, RTC_FORMAT_BIN);
+		HAL_RTC_GetDate(&hrtc, &Date, RTC_FORMAT_BIN);
+		memset(oledStr,NULL, size);
+		snprintf(oledStr,sizeof(oledStr)," %d/%02d/%02d ", 2000+Date.Year, Date.Month, Date.Date);
+		ssd1306_SetCursor(50, 0);
+    ssd1306_WriteString(oledStr, Font_7x10, White);
+		memset(oledStr,NULL, size);
+	  snprintf(oledStr,sizeof(oledStr)," %02d:%02d:%02d",  Time.Hours, Time.Minutes, Time.Seconds);
+		ssd1306_SetCursor(50, 10);
+		ssd1306_WriteString(oledStr, Font_7x10, White);
 		ssd1306_SetCursor(0,0);
 		ssd1306_draw_bitmap(1, 2, rssiSingal_5, 16, 11);//anten
-		ssd1306_draw_bitmap(60, 2, rssiSingal_4, 16, 11);//anten
-		ssd1306_draw_bitmap(80, 2, rssiSingal_3, 16, 11);//anten
-		ssd1306_draw_bitmap(100, 2, rssiSingal_1, 16, 11);//anten
 		ssd1306_draw_bitmap(25, 0, noSignal, 16, 15);//no anten
-		ssd1306_draw_bitmap(45, 0, loraSignal_4, 16, 15);//loraSignal_4
-		ssd1306_draw_bitmap(1, 18, line, 128, 2);//line
-		ssd1306_draw_bitmap(80, 35, tapOn , 20, 30);//tapOn
+		ssd1306_draw_bitmap(1, 21, line, 128, 2);//line
+	//	ssd1306_draw_bitmap(80, 35, tapOn , 20, 30);//tapOn
 	//	ssd1306_draw_bitmap(1, 20, ldm, 104, 40);//ldm logo
 	//  ssd1306_UpdateScreen();
-		ssd1306_draw_bitmap(100, 35, tapOff , 20, 30);//tapOff
+	//	ssd1306_draw_bitmap(100, 35, tapOff , 20, 30);//tapOff
 		ssd1306_UpdateScreen();
 	
 		
