@@ -154,7 +154,8 @@ uint8_t 								buttonId;												//it is the extenal botton id that is pushe
 uint8_t 								processFlag=0;									//It is set to 1 if we have a process program event to run. buttons are pushed
 uint8_t									unfinishedEventFlag=0;					//It is set to 1 if we have an unfinished event 
 uint8_t 								getProcessProgramsStatus=0;			//Get process program  unsuccessful /successful  flag
-uint8_t									initializingFlag=0;							//set to 1 when initial setting started and then set to 0 when it done 
+uint8_t									initializingFlag=0;							//set to 1 when initial setting started and then set to 0 when it done and remain 0 in all program
+uint8_t									initializingDoneFlag=0;					//set to 1 when initializingFlag vlaue chnged from 1 to 0 
 uint8_t									tim5CallbackCounter=0;					//a counter that used in HAL_TIM_PeriodElapsedCallback function
 uint8_t									dotPointCounter=0;							// count dotpoint in initializing in HAL_TIM_PeriodElapsedCallback function
 uint32_t								lastTimeStamp;									//used when read last current time  stamp from eeprom
@@ -2074,10 +2075,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 			tim5CallbackCounter++;
 			if(2<tim5CallbackCounter&&tim5CallbackCounter<10)
 			 {
-				 ssd1306_draw_bitmap(1, 20, ldm, 104, 40);//ldm logo
+				 ssd1306_draw_bitmap(20, 25, ldm, 104, 40);//ldm logo
 			 }
 			 else
-				ssd1306_clear_screen(0,110,20,64);	//clear logo on logo
+				ssd1306_clear_screen(0,128,20,64);	//clear logo on logo
 			 
 			if(tim5CallbackCounter>10)
 			{
@@ -2108,16 +2109,30 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 				}
 			}
 	 }
-	 else if(tim5CallbackCounter>0)
+	 else if(tim5CallbackCounter>20)
 	 {
-	  tim5CallbackCounter=0;
-		ssd1306_clear_screen(0,110,20,64);//clear main section of screen
-		ssd1306_SetCursor(2,30);
-		ssd1306_WriteString("Initializing Done", Font_7x10, White);
-		ssd1306_draw_bitmap(45, 42, checkRight, 16, 21);
+			initializingDoneFlag=1;
+		 	tim5CallbackCounter=0;
 
-		  	
-		}
+	 }
+	 if(initializingDoneFlag&&tim5CallbackCounter<8)
+	 {
+		 ssd1306_clear_screen(0,128,20,64);//clear main section of screen
+		 ssd1306_SetCursor(2,30);
+		 ssd1306_WriteString("Initializing Done", Font_7x10, White);
+		 ssd1306_draw_bitmap(45, 42, checkRight, 16, 21);
+		 tim5CallbackCounter++;
+		 if(tim5CallbackCounter==4)
+		 {
+			 	ssd1306_clear_screen(0,128,20,64);//clear main section of screen after printing "Initializing Done"
+			  tim5CallbackCounter=0;
+			  initializingDoneFlag=0;
+		 }
+	 }
+
+	
+	  	
+		
 
 	 
 //		memset(oledStr,NULL, size);
