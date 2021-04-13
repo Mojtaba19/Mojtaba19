@@ -31,4 +31,5 @@ extern const uint8_t ldm[];
 extern const uint8_t deleteMainScrenn[];
 extern const uint8_t noSignal[];
 extern const uint8_t checkRight[];
+extern const uint8_t serverCnection[]; 
 #endif // __SSD1306_FONTS_H__

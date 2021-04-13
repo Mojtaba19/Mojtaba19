@@ -58,7 +58,8 @@ typedef enum
 #define										size					2100			// Size of SIM800 string buffer.
 extern char								str[size],ContentStr[size];
 extern char								RxBuffer[size];
-extern char 							outputsStatus[size];	
+extern char 							outputsStatus[size];
+extern char 							rssiStrValue[5];
 extern uint8_t						ErrorCounter;
 extern uint8_t						action;
 extern uint8_t		        buttonsStatus[2];			//status of the 2 external buttons 

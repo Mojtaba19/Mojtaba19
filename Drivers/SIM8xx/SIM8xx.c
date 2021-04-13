@@ -261,6 +261,7 @@ void sim80x_Send_Status(char*IP){
 	char sendStatus[100];// a JSON including output status RSSI value and external bottons status that post to server
 	memset(sendStatus,NULL,100);
 	memset(str,NULL,30);
+	memset(rssiStrValue,NULL,5);
 	memset(ContentStr, NULL,size);
 	memset(outputsStatus,NULL,size);
 	outputsStatus[0]='0';
@@ -287,9 +288,9 @@ void sim80x_Send_Status(char*IP){
 		startAnswer	= strstr(RxBuffer, "+CSQ:")+5;
 		endAnswer		= strstr(RxBuffer, ",");
 		for(int i=(startAnswer-RxBuffer); i<(endAnswer-RxBuffer); i++)
-			str[i-(startAnswer-RxBuffer)] = RxBuffer[i];	//ContentStr=RSSI value of sim800
+			rssiStrValue[i-(startAnswer-RxBuffer)] = RxBuffer[i];	//ContentStr=RSSI value of sim800
 
-		snprintf(sendStatus,100,"{\"sc\":\"%s\",\"nc\":\"%s\",\"ebc\": \"%d%d\"}\r\n",outputsStatus,str,buttonsStatus[1],buttonsStatus[0]); 			// Creating pure JSON from SIM800 response. sc: output status , nc:RSSI value , ebc: external bottons status
+		snprintf(sendStatus,100,"{\"sc\":\"%s\",\"nc\":\"%s\",\"ebc\": \"%d%d\"}\r\n",outputsStatus,rssiStrValue,buttonsStatus[1],buttonsStatus[0]); 			// Creating pure JSON from SIM800 response. sc: output status , nc:RSSI value , ebc: external bottons status
 																																																													// ContentStr is the JSON contain RSSI value , OUTPUT Status and external Buttons Status that  post in server
 										
 	//sending status to server:
