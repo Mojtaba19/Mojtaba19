@@ -2072,20 +2072,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		if(initializingFlag)
 	 {
 			tim5CallbackCounter++;
-			if(1<tim5CallbackCounter&&tim5CallbackCounter<5)
+			if(2<tim5CallbackCounter&&tim5CallbackCounter<10)
 			 {
 				 ssd1306_draw_bitmap(1, 20, ldm, 104, 40);//ldm logo
 			 }
 			 else
-			 {
-				//clear logo on logo
-				for(int j = 20; j < 60; j ++)
-				{
-					for(int i = 0; i < 110; i ++ )
-								ssd1306_DrawPixel(i, j, Black);//clear (i,j) pixel
-				}
-			 }
-			if(tim5CallbackCounter>5)
+				ssd1306_clear_screen(0,110,20,64);	//clear logo on logo
+			 
+			if(tim5CallbackCounter>10)
 			{
 				ssd1306_SetCursor(2,30);
 				ssd1306_WriteString("Initializing", Font_7x10, White);
@@ -2114,18 +2108,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 				}
 			}
 	 }
-	 else if(tim5CallbackCounter>10)
+	 else if(tim5CallbackCounter>0)
 	 {
 	  tim5CallbackCounter=0;
-	 
-		 for(int j = 20; j < 64; j ++)
-			{
-				for(int i = 0; i < 110; i ++ )
-							ssd1306_DrawPixel(i, j, Black);//clear (i,j) pixel
-			}
-				ssd1306_SetCursor(2,30);
-				ssd1306_WriteString("Initializing done", Font_7x10, White);
-				ssd1306_draw_bitmap(45, 42, checkRight, 16, 21);
+		ssd1306_clear_screen(0,110,20,64);//clear main section of screen
+		ssd1306_SetCursor(2,30);
+		ssd1306_WriteString("Initializing Done", Font_7x10, White);
+		ssd1306_draw_bitmap(45, 42, checkRight, 16, 21);
 
 		  	
 		}

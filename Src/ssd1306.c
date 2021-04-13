@@ -281,3 +281,11 @@ void ssd1306_draw_bitmap(uint8_t chXpos, uint8_t chYpos, const uint8_t *pchBmp, 
         }
     }
 }
+void ssd1306_clear_screen(uint8_t xPosStart,uint8_t xPosEnd,uint8_t yPosStart,uint8_t yPosEnd){
+	
+			 for(int j = yPosStart; j < yPosEnd; j ++)
+			{
+				for(int i = xPosStart; i < xPosEnd; i ++ )
+							ssd1306_DrawPixel(i, j, Black);//clear (i,j) pixel
+			}
+};
