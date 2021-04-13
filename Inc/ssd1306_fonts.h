@@ -28,5 +28,7 @@ extern const uint8_t loraSignal_1[];
 extern const uint8_t tapOn [];
 extern const uint8_t tapOff[];
 extern const uint8_t ldm[];
+extern const uint8_t deleteMainScrenn[];
 extern const uint8_t noSignal[];
+extern const uint8_t checkRight[];
 #endif // __SSD1306_FONTS_H__

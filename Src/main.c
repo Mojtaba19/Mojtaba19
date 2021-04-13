@@ -154,6 +154,9 @@ uint8_t 								buttonId;												//it is the extenal botton id that is pushe
 uint8_t 								processFlag=0;									//It is set to 1 if we have a process program event to run. buttons are pushed
 uint8_t									unfinishedEventFlag=0;					//It is set to 1 if we have an unfinished event 
 uint8_t 								getProcessProgramsStatus=0;			//Get process program  unsuccessful /successful  flag
+uint8_t									initializingFlag=0;							//set to 1 when initial setting started and then set to 0 when it done 
+uint8_t									tim5CallbackCounter=0;					//a counter that used in HAL_TIM_PeriodElapsedCallback function
+uint8_t									dotPointCounter=0;							// count dotpoint in initializing in HAL_TIM_PeriodElapsedCallback function
 uint32_t								lastTimeStamp;									//used when read last current time  stamp from eeprom
 uint32_t								lastEventTimeStamp;							//used when read last event time  stamp from eeprom
 
@@ -257,9 +260,11 @@ ssd1306_Init();
 	DEBUG("\n\r*               Made in I.R.Iran               *");
 	DEBUG("\n\r*                                              *");
 	DEBUG("\n\r************************************************\n\r");
-	DEBUG("\n\r\n\r");
+	
+	initializingFlag=1; //initializing seting is starting
+	DEBUG("\n\r Tim start IT... \n\r");
 	HAL_TIM_Base_Start_IT(&htim5);
-//	DEBUG("\n\r    --DONE--\n\r");
+	DEBUG("\n\r    --DONE--\n\r");
 #if(__FIRSTTIME_PROGRAMMING__==1)		
 	//*
 	DEBUG("\n\rSETTING DATE AND TIME...");	
@@ -356,7 +361,7 @@ ssd1306_Init();
 	DEBUG("\n\r    --DONE--\n\r");	
 	//*/
 		
-	/*
+/*
 	DEBUG("\n\rGETTING ID BY SERIAL NUMBER...\n\r");
 		if(isConnect==1)
 			myID = GetID();
@@ -373,8 +378,8 @@ ssd1306_Init();
 		snprintf(str, size, "\n\rmyID is \"%d\"", myID);
 		DEBUG(str);
 	DEBUG("\n\r    --DONE--\n\r");	
-	//*/
 
+*/
 	//*
 	DEBUG("\n\rSMS SETTING...\n\r");
 		SMSSetting();
@@ -390,7 +395,7 @@ ssd1306_Init();
 		HAL_Delay(500);
 		sim80x_SendSMS(phone,__WELCOME_TEXT,6000);
 	DEBUG("\n\r    --DONE--\n\r");	
-	//*/
+	*/
 	
 	/*	
 	DEBUG("\n\rGETTING ALL PROGRAMS FROM SERVER...\n\r");
@@ -411,7 +416,7 @@ ssd1306_Init();
 	DEBUG("\n\r    --DONE--\n\r");	
 	//*/
 	
-	
+	/*
 	DEBUG("\n\rGETTING ALL PROCESS PROGRAMS FROM SERVER...\n\r");
 		HAL_Delay(500);
 		if(isConnect==1)
@@ -425,6 +430,7 @@ ssd1306_Init();
 	//*/
 	
 	//*
+	/*
 	DEBUG("\n\rSETTING NEXT PROCESS PROGRAM ALARM...");
 		HAL_Delay(500);
 		memset(str,NULL,size);
@@ -467,7 +473,8 @@ ssd1306_Init();
 		sim80x_HTTP_Stop();
 	DEBUG("\n\r    --DONE--\n\r");	
 	//*/
-	
+	initializingFlag=0; //initializing seting done
+		
 	DEBUG("\n\r  <<< INITIALIZING DONE >>>\n\r");
 	HAL_Delay(1000);
 		
@@ -2057,24 +2064,88 @@ uint8_t JSON2int(char* result, char* raw_input, char* key){
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   /* USER CODE BEGIN Callback 0 */
-	if(htim->Instance==TIM5){
+	if(htim->Instance==TIM5)
+	{
+		
 		HAL_RTC_GetTime(&hrtc, &Time, RTC_FORMAT_BIN);
 		HAL_RTC_GetDate(&hrtc, &Date, RTC_FORMAT_BIN);
-		memset(oledStr,NULL, size);
-		snprintf(oledStr,sizeof(oledStr)," %d/%02d/%02d ", 2000+Date.Year, Date.Month, Date.Date);
-		ssd1306_SetCursor(50, 0);
-    ssd1306_WriteString(oledStr, Font_7x10, White);
+		if(initializingFlag)
+	 {
+			tim5CallbackCounter++;
+			if(1<tim5CallbackCounter&&tim5CallbackCounter<5)
+			 {
+				 ssd1306_draw_bitmap(1, 20, ldm, 104, 40);//ldm logo
+			 }
+			 else
+			 {
+				//clear logo on logo
+				for(int j = 20; j < 60; j ++)
+				{
+					for(int i = 0; i < 110; i ++ )
+								ssd1306_DrawPixel(i, j, Black);//clear (i,j) pixel
+				}
+			 }
+			if(tim5CallbackCounter>5)
+			{
+				ssd1306_SetCursor(2,30);
+				ssd1306_WriteString("Initializing", Font_7x10, White);
+				switch(dotPointCounter) 
+				{
+					case 0:
+						ssd1306_DrawPixel(93,38, White);
+				  	dotPointCounter++;
+					break;
+					case 1:
+						ssd1306_DrawPixel(93,38, White);
+					  ssd1306_DrawPixel(98,38, White);
+				  	dotPointCounter++;
+					break;
+					case 2:
+						ssd1306_DrawPixel(93,38, White);
+						ssd1306_DrawPixel(98,38, White);
+				    ssd1306_DrawPixel(103,38, White);
+				  	dotPointCounter++;
+					break;
+					case 3:
+						dotPointCounter=0;
+						ssd1306_DrawPixel(96,38,  Black);
+						ssd1306_DrawPixel(98,38, Black);
+				    ssd1306_DrawPixel(103,38, Black);
+				}
+			}
+	 }
+	 else if(tim5CallbackCounter>10)
+	 {
+	  tim5CallbackCounter=0;
+	 
+		 for(int j = 20; j < 64; j ++)
+			{
+				for(int i = 0; i < 110; i ++ )
+							ssd1306_DrawPixel(i, j, Black);//clear (i,j) pixel
+			}
+				ssd1306_SetCursor(2,30);
+				ssd1306_WriteString("Initializing done", Font_7x10, White);
+				ssd1306_draw_bitmap(45, 42, checkRight, 16, 21);
+
+		  	
+		}
+
+	 
+//		memset(oledStr,NULL, size);
+//		snprintf(oledStr,sizeof(oledStr)," %d/%02d/%02d ", 2000+Date.Year, Date.Month, Date.Date);
+//		ssd1306_SetCursor(50, 0);
+//    ssd1306_WriteString(oledStr, Font_7x10, White);
+		
 		memset(oledStr,NULL, size);
 	  snprintf(oledStr,sizeof(oledStr)," %02d:%02d:%02d",  Time.Hours, Time.Minutes, Time.Seconds);
-		ssd1306_SetCursor(50, 10);
-		ssd1306_WriteString(oledStr, Font_7x10, White);
+		ssd1306_SetCursor(60, 3);
+		ssd1306_WriteString(oledStr, Font_7x10, White);//show time on oled
 		ssd1306_SetCursor(0,0);
 		ssd1306_draw_bitmap(1, 2, rssiSingal_5, 16, 11);//anten
 		ssd1306_draw_bitmap(25, 0, noSignal, 16, 15);//no anten
-		ssd1306_draw_bitmap(1, 21, line, 128, 2);//line
+		ssd1306_draw_bitmap(1, 17, line, 128, 2);//line
 	//	ssd1306_draw_bitmap(80, 35, tapOn , 20, 30);//tapOn
 	//	ssd1306_draw_bitmap(1, 20, ldm, 104, 40);//ldm logo
-	//  ssd1306_UpdateScreen();
 	//	ssd1306_draw_bitmap(100, 35, tapOff , 20, 30);//tapOff
 		ssd1306_UpdateScreen();
 	
