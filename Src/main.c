@@ -156,12 +156,16 @@ uint8_t 								buttonId;												//it is the extenal botton id that is pushe
 uint8_t 								processFlag=0;									//It is set to 1 if we have a process program event to run. buttons are pushed
 uint8_t									unfinishedEventFlag=0;					//It is set to 1 if we have an unfinished event 
 uint8_t 								getProcessProgramsStatus=0;			//Get process program  unsuccessful /successful  flag
+uint8_t 								getProgramsStatus=0;						//Get  program  unsuccessful /successful  flag
 uint8_t									initializingFlag=0;							//set to 1 when initial setting started and then set to 0 when it done and remain 0 in all program
 uint8_t									tim5CallbackCounter=0;					//a counter that used in HAL_TIM_PeriodElapsedCallback function
 uint8_t									dotPointCounter=0;							// count dotpoint in initializing in HAL_TIM_PeriodElapsedCallback function
 uint8_t 								blinker=0;											//used in blinking in oled
-uint8_t									oledState=0;
-uint8_t									lastTim5CallbackCounter=0;
+uint8_t									oledState=0;										// oled screen state 
+uint8_t									lastTim5CallbackCounter=0;			//used to save last time in every state of oled screen
+uint8_t									oledPageNumber=0;								//screen page number in oled
+uint8_t									getProcessProgramsStarting=0;			//1 if we start to get procees programs used in showing on oled
+uint8_t									getProgramsStarting=0;						//1 if we start to get  programs used in showing on oled
 uint32_t								lastTimeStamp;									//used when read last current time  stamp from eeprom
 uint32_t								lastEventTimeStamp;							//used when read last event time  stamp from eeprom
 
@@ -330,8 +334,7 @@ ssd1306_Init();
 	DEBUG("\n\rAPPLYING LAST OUTPUT STATUS...");
 		HAL_Delay(500);
 		processFlag=HAL_RTCEx_BKUPRead(&hrtc, LAST_PROCESS_FLAG_STATUS);
-		//LastStatus = (uint8_t)HAL_RTCEx_BKUPRead(&hrtc, LAST_STATUS_ADDRESS);	
-		LastStatus=32;
+		LastStatus = (uint8_t)HAL_RTCEx_BKUPRead(&hrtc, LAST_STATUS_ADDRESS);	
 		ApplyAction(LastStatus);
 	DEBUG("\n\r    --DONE--\n\r");	
 	/*
@@ -403,14 +406,15 @@ ssd1306_Init();
 	DEBUG("\n\r    --DONE--\n\r");	
 	*/
 	
-	/*	
+		
 	DEBUG("\n\rGETTING ALL PROGRAMS FROM SERVER...\n\r");
 		HAL_Delay(500);
 		if(isConnect==1){
 			GetAllPrograms();
 			AlarmIsSet = 0;
 		}	
-	DEBUG("\n\r    --DONE--\n\r");	
+	DEBUG("\n\r    --DONE--\n\r");
+	HAL_Delay(6000);		
 	//*/
 
 	/*
@@ -422,7 +426,7 @@ ssd1306_Init();
 	DEBUG("\n\r    --DONE--\n\r");	
 	//*/
 	
-	/*
+	
 	DEBUG("\n\rGETTING ALL PROCESS PROGRAMS FROM SERVER...\n\r");
 		HAL_Delay(500);
 		if(isConnect==1)
@@ -436,7 +440,7 @@ ssd1306_Init();
 	//*/
 	
 	//*
-	/*
+	
 	DEBUG("\n\rSETTING NEXT PROCESS PROGRAM ALARM...");
 		HAL_Delay(500);
 		memset(str,NULL,size);
@@ -479,6 +483,7 @@ ssd1306_Init();
 		sim80x_HTTP_Stop();
 	DEBUG("\n\r    --DONE--\n\r");	
 	//*/
+	HAL_Delay(6000);
 	initializingFlag=0; //initializing seting done
 		
 	DEBUG("\n\r  <<< INITIALIZING DONE >>>\n\r");
@@ -535,12 +540,9 @@ ssd1306_Init();
 	 	 HAL_RTCEx_BKUPWrite(&hrtc, LAST_CURRENT_TIME_STAMP, currentTimeStamp);//stor time stamp into eeprom
 			
 		 sim80x_HTTP_Start();
-			
-//		if( GetAllProcessPrograms()) // get all process programs: return 1 if is successful and return 0 is unsuccessful
-//			DEBUG("GetAllProcessPrograms is successful ");
-//		else
-//			DEBUG("ERROR in GetAllProcessPrograms ");
-//				
+		GetAllPrograms();
+		HAL_Delay(6000);
+		GetAllProcessPrograms();
 		get_output_result = GetOutput();
 			/*
 				get_output_result has 5 values:
@@ -1192,6 +1194,7 @@ uint8_t GetAllProcessPrograms(void){
 	char*		endAnswer;
 	char    processProgram_raw[size];//used in separating processProgram of evrery buttons
 	int 		buttonsNum; 
+	getProcessProgramsStarting=1;
 	getProcessProgramsStatus=0;//Get process program  successful /Unsuccessful flag
 	ProcessProgram processProg;
 	memset(ContentStr,NULL,size);
@@ -1240,7 +1243,8 @@ uint8_t GetAllProcessPrograms(void){
 					for(buttonsNum=1;buttonsNum<=BUTTONS_NUM;buttonsNum++)
 						PrintAllProcessProgram(buttonsNum);// Prints all valid Process programs stored in EEPROM.	
 						
-						getProcessProgramsStatus=1;//Get process program  successful 
+						getProcessProgramsStatus=1;//Get process program  successful
+						getProcessProgramsStarting=0;							
 						return  getProcessProgramsStatus;	
 				}
 				
@@ -1248,6 +1252,7 @@ uint8_t GetAllProcessPrograms(void){
 				{
 					DEBUG("\n\r --- There is no process program in server --- \n\r");
 					getProcessProgramsStatus=0;//Get process program  unsuccessful 
+					getProcessProgramsStarting=0;	
 					return  getProcessProgramsStatus;
 				}
 				
@@ -1255,6 +1260,7 @@ uint8_t GetAllProcessPrograms(void){
 				{
 					DEBUG("\n\r --- Erorr in getAllprocessPrograms --- \n\r");
 					getProcessProgramsStatus=0;//Get process program  unsuccessful 
+					getProcessProgramsStarting=0;	
 					return  getProcessProgramsStatus;
 				}
 				
@@ -1267,6 +1273,7 @@ uint8_t GetAllProcessPrograms(void){
 	else
 		getProcessProgramsStatus=0;//Get process program  unsuccessful 
 	
+getProcessProgramsStarting=0;	
 return  getProcessProgramsStatus;	
 
 	
@@ -1279,7 +1286,7 @@ void GetAllPrograms(void){
 	char*		startAnswer;
 	char*		endAnswer;
 	Program temp;
-	
+	getProgramsStarting=1;
 	memset(ContentStr,NULL,size);
 	snprintf(ContentStr,size,"{\"land\":%d}\r\n", myID);									// INPUT FORMAT --> { "land" : xx }
 	DEBUG(ContentStr);
@@ -1320,16 +1327,20 @@ void GetAllPrograms(void){
 			writeProg(&temp);
 			PrintProgram(temp);
 			memcpy(ContentStr, ContentStr+strlen(program_raw)+1, size);	
+			getProgramsStatus=1;
 		}
 	}
 	else if(strstr((char *)ContentStr,"[]") != NULL){
 		DEBUG("\n\r --- There is no program in server --- \n\r");
 		deleteAllPrograms();
+		getProgramsStatus=1;
 		AlarmIsSet = 0;
 	}
 	else{
 		DEBUG("\n\r --- Erorr in getAllPrograms --- \n\r");
+		getProgramsStatus=0;
 	}
+	getProgramsStarting=0;
 }
 
 
@@ -2073,13 +2084,19 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   /* USER CODE BEGIN Callback 0 */
 	if(htim->Instance==TIM5)
 	{
-		
+
 		HAL_RTC_GetTime(&hrtc, &Time, RTC_FORMAT_BIN);
 		HAL_RTC_GetDate(&hrtc, &Date, RTC_FORMAT_BIN);
+		tim5CallbackCounter++;
 		memset(oledStr,NULL, size);
 	  snprintf(oledStr,sizeof(oledStr)," %02d:%02d",  Time.Hours, Time.Minutes);
-		ssd1306_SetCursor(80, 3);
+		ssd1306_SetCursor(84, 3);
 		ssd1306_WriteString(oledStr, Font_7x10, White);//show time on oled
+		//oledPageNumber
+		ssd1306_SetCursor(48,3);
+//		memset(oledStr,NULL, size);
+//		snprintf(oledStr,sizeof(oledStr),"P:%d/2", oledPageNumber+1);
+//		ssd1306_WriteString(oledStr, Font_7x10, White);
 		ssd1306_draw_bitmap(1, 17, line, 128, 2);//line
 				//////////RSSI antenna conection ///////// 
 	ssd1306_SetCursor(0,0);
@@ -2150,7 +2167,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	
 	ssd1306_draw_bitmap(25, 0, noSignal, 16, 15);//no anten
 	
-		tim5CallbackCounter++;
+
+	
+	if(oledPageNumber==0)
+	{
 		switch(oledState)
 		{
 			case 0: 
@@ -2191,6 +2211,17 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 								ssd1306_DrawPixel(93,38,  Black);
 								ssd1306_DrawPixel(98,38, Black);
 								ssd1306_DrawPixel(103,38, Black);
+							break;
+						}
+						if(getProcessProgramsStarting)
+						{
+							ssd1306_clear_screen(0,128,20,64);	//clear logo on logo
+							oledState=4; 
+						}
+						else if(getProgramsStarting)
+						{
+							ssd1306_clear_screen(0,128,20,64);	//clear logo on logo
+							oledState=6; 
 						}
 					}
 					else
@@ -2214,35 +2245,191 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 					 }
 		  break;
 			case 3:
-					ssd1306_SetCursor(35,23);
-					ssd1306_WriteString("Outputs :", Font_7x10, White);
-			
 			 //show last outouts status:
 		
 					if(HAL_GPIO_ReadPin(relay1_GPIO_Port, relay1_Pin))
-						ssd1306_draw_bitmap(10, 34, tapOn , 20, 30);//tapOn
+						ssd1306_draw_bitmap(60, 34, tapOn , 20, 30);//tapOn
 					else
-						ssd1306_draw_bitmap(10, 34, tapOff , 20, 30);//tapOff
+						ssd1306_draw_bitmap(60, 34, tapOff , 20, 30);//tapOff
 					
 					if(HAL_GPIO_ReadPin(relay2_GPIO_Port, relay2_Pin))
-						ssd1306_draw_bitmap(35, 34, tapOn , 20, 30);//tapOn
-					else
-						ssd1306_draw_bitmap(35, 34, tapOff , 20, 30);//tapOff
-					
-					if(HAL_GPIO_ReadPin(relay3_GPIO_Port, relay3_Pin))
-						ssd1306_draw_bitmap(60, 34, tapOn , 20, 30);//tapOn	
-					else
-						ssd1306_draw_bitmap(60, 34, tapOff , 20, 30);//tapOff	
-					
-					if(HAL_GPIO_ReadPin(relay4_GPIO_Port, relay4_Pin))
 						ssd1306_draw_bitmap(85, 34, tapOn , 20, 30);//tapOn
 					else
-						ssd1306_draw_bitmap(85, 34, tapOff , 20, 30);//tapOff					
+						ssd1306_draw_bitmap(85, 34, tapOff , 20, 30);//tapOff
+					
+//					if(HAL_GPIO_ReadPin(relay3_GPIO_Port, relay3_Pin))
+//						ssd1306_draw_bitmap(60, 34, tapOn , 20, 30);//tapOn	
+//					else
+//						ssd1306_draw_bitmap(60, 34, tapOff , 20, 30);//tapOff	
+//					
+//					if(HAL_GPIO_ReadPin(relay4_GPIO_Port, relay4_Pin))
+//						ssd1306_draw_bitmap(85, 34, tapOn , 20, 30);//tapOn
+//					else
+//						ssd1306_draw_bitmap(85, 34, tapOff , 20, 30);//tapOff	
+					
+				if(	getProcessProgramsStarting)
+				{
+					oledState=4;
+					ssd1306_clear_screen(0,128,20,64);//clear main section of screen
+				}
+				if(getProgramsStarting)
+				{
+					oledState=6;
+					ssd1306_clear_screen(0,128,20,64);//clear main section of screen	
+				}
+//				if(tim5CallbackCounter>18+lastTim5CallbackCounter)
+//				{
+//					oledPageNumber=1;
+//					lastTim5CallbackCounter=tim5CallbackCounter;
+//				}
 			break; 
-	
-			
-		}
+			case 4:
 
+					ssd1306_SetCursor(40,26);//show "Getting process programs" until Getting process programs done
+					ssd1306_WriteString("Getting ", Font_7x10, White);
+					ssd1306_SetCursor(10,39);
+					ssd1306_WriteString("process programs", Font_7x10, White);
+						switch(dotPointCounter) // show dot points under "Getting process programs" until Getting process programs done
+						{
+							case 0:
+								ssd1306_DrawPixel(56,55, White);//"Getting process programs."
+								dotPointCounter++;
+							break;
+
+							case 1:
+								ssd1306_DrawPixel(56,55, White);//"Getting process programs . ."
+								ssd1306_DrawPixel(61,55, White);
+								dotPointCounter++;
+							break;
+							case 2:
+								ssd1306_DrawPixel(56,55, White);//"Getting process programs . . ."
+								ssd1306_DrawPixel(61,55, White);
+								ssd1306_DrawPixel(66,55, White);
+								dotPointCounter++;
+							break;
+							case 3:
+								dotPointCounter=0;
+								ssd1306_DrawPixel(56,55,  Black);
+								ssd1306_DrawPixel(61,55, Black);
+								ssd1306_DrawPixel(66,55, Black);
+							break;
+						}
+				if(	getProcessProgramsStarting==0)
+				{
+					oledState=5;	
+					lastTim5CallbackCounter=tim5CallbackCounter;
+					ssd1306_clear_screen(55,128,54,64);//clear main section of screen
+				}
+			break;
+	 	  case 5:
+				if(tim5CallbackCounter<10+lastTim5CallbackCounter) //show the result of Getting process programs 
+					{
+						if(getProcessProgramsStatus==1)//Getting process programs is successful
+						{
+							ssd1306_SetCursor(53,52);
+							ssd1306_WriteString("Done", Font_7x10, White);
+						}
+						else //Getting process programs is not successful
+						{
+							ssd1306_SetCursor(48,52);
+							ssd1306_WriteString("Error!", Font_7x10, White);	
+						}
+						
+					}
+				else
+					{
+						if(initializingFlag)
+						{
+							ssd1306_clear_screen(0,128,20,64);//clear main section of screen
+							oledState=1;
+						}
+						else
+						{
+					    ssd1306_clear_screen(0,128,20,64);//clear main section of screen
+							oledState=3;
+						}
+					}
+			break;
+			case 6:
+					ssd1306_SetCursor(4,26);//show "Getting  programs" until Getting  programs done
+					ssd1306_WriteString("Getting Programs ", Font_7x10, White);
+						switch(dotPointCounter) // show dot points under "Getting  programs" until Getting  programs done
+						{
+							case 0:
+								ssd1306_DrawPixel(56,42, White);//"Getting  programs."
+								dotPointCounter++;
+							break;
+
+							case 1:
+								ssd1306_DrawPixel(56,42, White);//"Getting  programs . ."
+								ssd1306_DrawPixel(61,42, White);
+								dotPointCounter++;
+							break;
+							case 2:
+								ssd1306_DrawPixel(56,42, White);//"Getting  programs . . ."
+								ssd1306_DrawPixel(61,42, White);
+								ssd1306_DrawPixel(66,42, White);
+								dotPointCounter++;
+							break;
+							case 3:
+								dotPointCounter=0;
+								ssd1306_DrawPixel(56,42,  Black);
+								ssd1306_DrawPixel(61,42, Black);
+								ssd1306_DrawPixel(66,42, Black);
+							break;
+						}
+				if(	getProgramsStarting==0)
+				{
+					oledState=7;	
+					lastTim5CallbackCounter=tim5CallbackCounter;
+					ssd1306_clear_screen(55,128,41,64);//clear main section of screen
+				}
+			break;
+			case 7:
+				if(tim5CallbackCounter<10+lastTim5CallbackCounter) //show the result of Getting process programs 
+					{
+						if(getProgramsStatus==1)//Getting process programs is successful
+						{
+							ssd1306_SetCursor(53,42);
+							ssd1306_WriteString("Done", Font_7x10, White);
+						}
+						else //Getting process programs is not successful
+						{
+							ssd1306_SetCursor(48,42);
+							ssd1306_WriteString("Error!", Font_7x10, White);	
+						}
+						
+					}
+				else
+					{
+						if(initializingFlag)
+						{
+							ssd1306_clear_screen(0,128,20,64);//clear main section of screen
+							oledState=1;
+						}
+						else
+						{
+					    ssd1306_clear_screen(0,128,20,64);//clear main section of screen
+							oledState=3;
+						}
+					}
+			break;
+		}
+	}
+	else if(oledPageNumber==1)
+	{
+		 ssd1306_clear_screen(0,128,20,64);//clear main section of screen
+		 ssd1306_SetCursor(2,27);
+		 ssd1306_WriteString("Temperature:", Font_7x10, White);
+		 ssd1306_SetCursor(2,47);
+		 ssd1306_WriteString("Moisture:", Font_7x10, White);
+		if(tim5CallbackCounter>18+lastTim5CallbackCounter)
+		{
+		  ssd1306_clear_screen(0,128,20,64);//clear main section of screen
+			oledPageNumber=0;
+			lastTim5CallbackCounter=tim5CallbackCounter;
+		}
+	}
 //		memset(oledStr,NULL, size);
 //		snprintf(oledStr,sizeof(oledStr)," %d/%02d/%02d ", 2000+Date.Year, Date.Month, Date.Date);
 //		ssd1306_SetCursor(50, 0);

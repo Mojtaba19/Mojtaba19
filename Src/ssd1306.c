@@ -67,9 +67,9 @@ void ssd1306_Init(void) {
 
     // Wait for the screen to boot
    // HAL_Delay(100);
-    //			TIM2->CNT=0;
+//   		TIM2->CNT=0;
 //			HAL_TIM_Base_Start(&htim2);
-//			while(TIM2->CNT<10000);
+//			while(TIM2->CNT<100000);
 //			HAL_TIM_Base_Stop(&htim2);
     // Init OLED
     ssd1306_WriteCommand(0xAE); //display off
