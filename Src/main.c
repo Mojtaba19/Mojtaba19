@@ -157,10 +157,11 @@ uint8_t 								processFlag=0;									//It is set to 1 if we have a process pro
 uint8_t									unfinishedEventFlag=0;					//It is set to 1 if we have an unfinished event 
 uint8_t 								getProcessProgramsStatus=0;			//Get process program  unsuccessful /successful  flag
 uint8_t									initializingFlag=0;							//set to 1 when initial setting started and then set to 0 when it done and remain 0 in all program
-uint8_t									initializingDoneFlag=0;					//set to 1 when initializingFlag vlaue chnged from 1 to 0 
 uint8_t									tim5CallbackCounter=0;					//a counter that used in HAL_TIM_PeriodElapsedCallback function
 uint8_t									dotPointCounter=0;							// count dotpoint in initializing in HAL_TIM_PeriodElapsedCallback function
 uint8_t 								blinker=0;											//used in blinking in oled
+uint8_t									oledState=0;
+uint8_t									lastTim5CallbackCounter=0;
 uint32_t								lastTimeStamp;									//used when read last current time  stamp from eeprom
 uint32_t								lastEventTimeStamp;							//used when read last event time  stamp from eeprom
 
@@ -325,14 +326,15 @@ ssd1306_Init();
 	
 #endif
 
-	/*
+	
 	DEBUG("\n\rAPPLYING LAST OUTPUT STATUS...");
 		HAL_Delay(500);
 		processFlag=HAL_RTCEx_BKUPRead(&hrtc, LAST_PROCESS_FLAG_STATUS);
-		LastStatus = (uint8_t)HAL_RTCEx_BKUPRead(&hrtc, LAST_STATUS_ADDRESS);	
+		//LastStatus = (uint8_t)HAL_RTCEx_BKUPRead(&hrtc, LAST_STATUS_ADDRESS);	
+		LastStatus=32;
 		ApplyAction(LastStatus);
 	DEBUG("\n\r    --DONE--\n\r");	
-	
+	/*
 	DEBUG("\n\rREADING FLOW1 AND FLOW2 FROM MEMORY...");
 		HAL_Delay(500);
 		Flow1=HAL_RTCEx_BKUPRead(&hrtc,1);	
@@ -2075,74 +2077,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		HAL_RTC_GetTime(&hrtc, &Time, RTC_FORMAT_BIN);
 		HAL_RTC_GetDate(&hrtc, &Date, RTC_FORMAT_BIN);
 		memset(oledStr,NULL, size);
-	  snprintf(oledStr,sizeof(oledStr)," %02d:%02d:%02d",  Time.Hours, Time.Minutes, Time.Seconds);
-		ssd1306_SetCursor(60, 3);
+	  snprintf(oledStr,sizeof(oledStr)," %02d:%02d",  Time.Hours, Time.Minutes);
+		ssd1306_SetCursor(80, 3);
 		ssd1306_WriteString(oledStr, Font_7x10, White);//show time on oled
 		ssd1306_draw_bitmap(1, 17, line, 128, 2);//line
-		
-//////////initializing/////////////
-		
-		if(initializingFlag)
-	 {
-			tim5CallbackCounter++;
-			if(2<tim5CallbackCounter&&tim5CallbackCounter<10)
-			 {
-				 ssd1306_draw_bitmap(20, 25, ldm, 104, 40);//show ldm logo for 4 sec
-			 }
-			 else
-				ssd1306_clear_screen(0,128,20,64);	//clear logo on logo
-			 
-			if(tim5CallbackCounter>10)
-			{
-				ssd1306_SetCursor(2,30);
-				ssd1306_WriteString("Initializing", Font_7x10, White);//show "Initializing" until initializing done
-				switch(dotPointCounter) 
-				{
-					case 0:
-						ssd1306_DrawPixel(93,38, White);//"Initializing ."
-				  	dotPointCounter++;
-					break;
-					case 1:
-						ssd1306_DrawPixel(93,38, White);//"Initializing . ."
-					  ssd1306_DrawPixel(98,38, White);
-				  	dotPointCounter++;
-					break;
-					case 2:
-						ssd1306_DrawPixel(93,38, White);//"Initializing . . ."
-						ssd1306_DrawPixel(98,38, White);
-				    ssd1306_DrawPixel(103,38, White);
-				  	dotPointCounter++;
-					break;
-					case 3:
-						dotPointCounter=0;
-						ssd1306_DrawPixel(96,38,  Black);
-						ssd1306_DrawPixel(98,38, Black);
-				    ssd1306_DrawPixel(103,38, Black);
-				}
-			}
-	 }
-	 else if(tim5CallbackCounter>20)
-	 {
-		 //means Initializing done
-			initializingDoneFlag=1;
-		 	tim5CallbackCounter=0;
-
-	 }
-	 if(initializingDoneFlag&&tim5CallbackCounter<8)
-	 {
-		 ssd1306_clear_screen(0,128,20,64);//clear main section of screen
-		 ssd1306_SetCursor(2,30);
-		 ssd1306_WriteString("Initializing Done", Font_7x10, White);
-		 ssd1306_draw_bitmap(45, 42, checkRight, 16, 21);
-		 tim5CallbackCounter++;
-		 if(tim5CallbackCounter==8)
-		 {
-			 	ssd1306_clear_screen(0,128,20,64);//clear main section of screen after printing "Initializing Done"
-			  tim5CallbackCounter=0;
-			  initializingDoneFlag=0;
-		 }
-	 }
-		//////////RSSI antenna conection ///////// 
+				//////////RSSI antenna conection ///////// 
 	ssd1306_SetCursor(0,0);
 	if( rssiIntValue<32&&rssiIntValue>19)//rssi Excellent
 	{
@@ -2174,7 +2113,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	
 	if(isConnect == 0&&rssiIntValue!=0)//if server  not conected "!" blinking beside rssi antenna
 	{
-		if	(blinker<6)
+		if	(blinker<4)
 		{
 	   ssd1306_SetCursor(1,2);
 		 ssd1306_WriteString("!", Font_7x10, White);
@@ -2210,44 +2149,106 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	////////lora antenaa////////
 	
 	ssd1306_draw_bitmap(25, 0, noSignal, 16, 15);//no anten
+	
+		tim5CallbackCounter++;
+		switch(oledState)
+		{
+			case 0: 
+					 if(2<tim5CallbackCounter&&tim5CallbackCounter<10)
+					 {
+						 ssd1306_draw_bitmap(20, 25, ldm, 104, 40);//show ldm logo for 4 sec
+					 }
+					 else if (tim5CallbackCounter&&tim5CallbackCounter>10)
+					 {
+						ssd1306_clear_screen(0,128,20,64);	//clear logo on logo
+						oledState=1; // go to next state
+					 }
+			break;		 
+			case 1:
+					if(initializingFlag){
+						ssd1306_SetCursor(2,30);
+						ssd1306_WriteString("Initializing", Font_7x10, White);//show "Initializing" until initializing done
+						switch(dotPointCounter) // show dot points in front of "Initializing" until initializing done
+						{
+							case 0:
+								ssd1306_DrawPixel(93,38, White);//"Initializing ."
+								dotPointCounter++;
+							break;
 
-	///////////Reading outputs status ////////////
+							case 1:
+								ssd1306_DrawPixel(93,38, White);//"Initializing . ."
+								ssd1306_DrawPixel(98,38, White);
+								dotPointCounter++;
+							break;
+							case 2:
+								ssd1306_DrawPixel(93,38, White);//"Initializing . . ."
+								ssd1306_DrawPixel(98,38, White);
+								ssd1306_DrawPixel(103,38, White);
+								dotPointCounter++;
+							break;
+							case 3:
+								dotPointCounter=0;
+								ssd1306_DrawPixel(93,38,  Black);
+								ssd1306_DrawPixel(98,38, Black);
+								ssd1306_DrawPixel(103,38, Black);
+						}
+					}
+					else
+					{
+						oledState=2;  // go to next state when initializing done
+						lastTim5CallbackCounter=tim5CallbackCounter; // save last time in state 1
+					}
+			break;
+			case 2:
+					if(tim5CallbackCounter<8+lastTim5CallbackCounter)//show "Initializing Done" for 4 sec after initializing done
+					 {
+						 ssd1306_clear_screen(0,128,20,64);//clear main section of screen
+						 ssd1306_SetCursor(2,30);
+						 ssd1306_WriteString("Initializing Done", Font_7x10, White);
+						 ssd1306_draw_bitmap(45, 42, checkRight, 16, 21);
+					 }
+					 else
+					 {
+						 ssd1306_clear_screen(0,128,20,64);//clear main section of screen
+						 oledState=3;// go to next state
+					 }
+		  break;
+			case 3:
+					ssd1306_SetCursor(35,23);
+					ssd1306_WriteString("Outputs :", Font_7x10, White);
+			
+			 //show last outouts status:
+		
+					if(HAL_GPIO_ReadPin(relay1_GPIO_Port, relay1_Pin))
+						ssd1306_draw_bitmap(10, 34, tapOn , 20, 30);//tapOn
+					else
+						ssd1306_draw_bitmap(10, 34, tapOff , 20, 30);//tapOff
+					
+					if(HAL_GPIO_ReadPin(relay2_GPIO_Port, relay2_Pin))
+						ssd1306_draw_bitmap(35, 34, tapOn , 20, 30);//tapOn
+					else
+						ssd1306_draw_bitmap(35, 34, tapOff , 20, 30);//tapOff
+					
+					if(HAL_GPIO_ReadPin(relay3_GPIO_Port, relay3_Pin))
+						ssd1306_draw_bitmap(60, 34, tapOn , 20, 30);//tapOn	
+					else
+						ssd1306_draw_bitmap(60, 34, tapOff , 20, 30);//tapOff	
+					
+					if(HAL_GPIO_ReadPin(relay4_GPIO_Port, relay4_Pin))
+						ssd1306_draw_bitmap(85, 34, tapOn , 20, 30);//tapOn
+					else
+						ssd1306_draw_bitmap(85, 34, tapOff , 20, 30);//tapOff					
+			break; 
+	
+			
+		}
 
- if(	tim5CallbackCounter==0&&initializingDoneFlag==0&&initializingFlag==0)
-	{
-		ssd1306_SetCursor(35,23);
-		ssd1306_WriteString("Outputs :", Font_7x10, White);	
-		
-		if(HAL_GPIO_ReadPin(relay1_GPIO_Port, relay1_Pin))
-			ssd1306_draw_bitmap(10, 35, tapOn , 20, 30);//tapOn
-		else
-			ssd1306_draw_bitmap(10, 35, tapOff , 20, 30);//tapOff
-		
-		if(HAL_GPIO_ReadPin(relay2_GPIO_Port, relay2_Pin))
-			ssd1306_draw_bitmap(35, 35, tapOn , 20, 30);//tapOn
-		else
-			ssd1306_draw_bitmap(35, 35, tapOff , 20, 30);//tapOff
-		
-		if(HAL_GPIO_ReadPin(relay3_GPIO_Port, relay3_Pin))
-			ssd1306_draw_bitmap(60, 35, tapOn , 20, 30);//tapOn	
-		else
-			ssd1306_draw_bitmap(60, 35, tapOff , 20, 30);//tapOff	
-		
-		if(HAL_GPIO_ReadPin(relay4_GPIO_Port, relay4_Pin))
-			ssd1306_draw_bitmap(85, 35, tapOn , 20, 30);//tapOn
-		else
-			ssd1306_draw_bitmap(85, 35, tapOff , 20, 30);//tapOff	
-		
-	}
 //		memset(oledStr,NULL, size);
 //		snprintf(oledStr,sizeof(oledStr)," %d/%02d/%02d ", 2000+Date.Year, Date.Month, Date.Date);
 //		ssd1306_SetCursor(50, 0);
 //    ssd1306_WriteString(oledStr, Font_7x10, White);
 
-		
-	//	ssd1306_draw_bitmap(80, 35, tapOn , 20, 30);//tapOn
-	//	ssd1306_draw_bitmap(1, 20, ldm, 104, 40);//ldm logo
-	//	ssd1306_draw_bitmap(100, 35, tapOff , 20, 30);//tapOff
+
 		ssd1306_UpdateScreen();
 	
 		
