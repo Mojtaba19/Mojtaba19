@@ -254,11 +254,13 @@ int main(void)
   /* USER CODE BEGIN 2 */
 	TH = malloc(2*sizeof(float));
 	DWT_Init();
-ssd1306_Init();
+
 	
 	//	HAL_RTCEx_BKUPWrite(&hrtc,1,8260);
 	//	HAL_RTCEx_BKUPWrite(&hrtc,2,8500);
-		
+			char test_str[50];
+	sprintf(test_str,"\n\rstatus is: %d\n\r", (uint8_t)HAL_I2C_IsDeviceReady(&hi2c2, SSD1306_I2C_ADDR, 10, 100));
+	DEBUG(test_str);
 	DEBUG("\n\r************************************************");
 	DEBUG("\n\r*            Petus: Baghyar - V2.2             *");
 	DEBUG("\n\r************************************************");
@@ -274,6 +276,7 @@ ssd1306_Init();
 	DEBUG("\n\r Tim start IT... \n\r");
 	HAL_TIM_Base_Start_IT(&htim5);
 	DEBUG("\n\r    --DONE--\n\r");
+	ssd1306_Init();
 #if(__FIRSTTIME_PROGRAMMING__==1)		
 	//*
 	DEBUG("\n\rSETTING DATE AND TIME...");	
@@ -334,7 +337,8 @@ ssd1306_Init();
 	DEBUG("\n\rAPPLYING LAST OUTPUT STATUS...");
 		HAL_Delay(500);
 		processFlag=HAL_RTCEx_BKUPRead(&hrtc, LAST_PROCESS_FLAG_STATUS);
-		LastStatus = (uint8_t)HAL_RTCEx_BKUPRead(&hrtc, LAST_STATUS_ADDRESS);	
+		//LastStatus = (uint8_t)HAL_RTCEx_BKUPRead(&hrtc, LAST_STATUS_ADDRESS);	
+		LastStatus=32;
 		ApplyAction(LastStatus);
 	DEBUG("\n\r    --DONE--\n\r");	
 	/*
@@ -406,7 +410,7 @@ ssd1306_Init();
 	DEBUG("\n\r    --DONE--\n\r");	
 	*/
 	
-		
+	/*	
 	DEBUG("\n\rGETTING ALL PROGRAMS FROM SERVER...\n\r");
 		HAL_Delay(500);
 		if(isConnect==1){
@@ -425,7 +429,7 @@ ssd1306_Init();
 		AlarmIsSet = 0;
 	DEBUG("\n\r    --DONE--\n\r");	
 	//*/
-	
+/*	
 	
 	DEBUG("\n\rGETTING ALL PROCESS PROGRAMS FROM SERVER...\n\r");
 		HAL_Delay(500);
@@ -440,7 +444,7 @@ ssd1306_Init();
 	//*/
 	
 	//*
-	
+	/*
 	DEBUG("\n\rSETTING NEXT PROCESS PROGRAM ALARM...");
 		HAL_Delay(500);
 		memset(str,NULL,size);
@@ -540,9 +544,9 @@ ssd1306_Init();
 	 	 HAL_RTCEx_BKUPWrite(&hrtc, LAST_CURRENT_TIME_STAMP, currentTimeStamp);//stor time stamp into eeprom
 			
 		 sim80x_HTTP_Start();
-		GetAllPrograms();
-		HAL_Delay(6000);
-		GetAllProcessPrograms();
+//		GetAllPrograms();
+//		HAL_Delay(6000);
+//		GetAllProcessPrograms();
 		get_output_result = GetOutput();
 			/*
 				get_output_result has 5 values:
@@ -2084,90 +2088,92 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   /* USER CODE BEGIN Callback 0 */
 	if(htim->Instance==TIM5)
 	{
-
+		
 		HAL_RTC_GetTime(&hrtc, &Time, RTC_FORMAT_BIN);
 		HAL_RTC_GetDate(&hrtc, &Date, RTC_FORMAT_BIN);
 		tim5CallbackCounter++;
-		memset(oledStr,NULL, size);
-	  snprintf(oledStr,sizeof(oledStr)," %02d:%02d",  Time.Hours, Time.Minutes);
-		ssd1306_SetCursor(84, 3);
-		ssd1306_WriteString(oledStr, Font_7x10, White);//show time on oled
-		//oledPageNumber
-		ssd1306_SetCursor(48,3);
-//		memset(oledStr,NULL, size);
-//		snprintf(oledStr,sizeof(oledStr),"P:%d/2", oledPageNumber+1);
-//		ssd1306_WriteString(oledStr, Font_7x10, White);
-		ssd1306_draw_bitmap(1, 17, line, 128, 2);//line
-				//////////RSSI antenna conection ///////// 
-	ssd1306_SetCursor(0,0);
-	if( rssiIntValue<32&&rssiIntValue>19)//rssi Excellent
-	{
-		 ssd1306_clear_screen(5,23,0,15);
-			ssd1306_draw_bitmap(5, 2, rssiSingal_5, 16, 11);//RSSI antenna
-	}
-	else if( rssiIntValue<20&&rssiIntValue>14)//rssi Good
-	{
-		  ssd1306_clear_screen(5,23,0,15);
-			ssd1306_draw_bitmap(5, 2, rssiSingal_4, 16, 11);//RSSI antenna
-	}
-	else if( rssiIntValue<15&&rssiIntValue>9)//rssi Ok
-	{
-			ssd1306_clear_screen(5,23,0,15);
-			ssd1306_draw_bitmap(5, 2, rssiSingal_3, 16, 11);//RSSI antenna
-	}
-	else if( rssiIntValue<10&&rssiIntValue>1)//rssi Marginal
-	{
-		  ssd1306_clear_screen(5,23,0,15);
-			ssd1306_draw_bitmap(5, 2, rssiSingal_2, 16, 11);//RSSI antenna
-	}
-	else
-	{
-		  ssd1306_clear_screen(5,23,0,12);
-			ssd1306_draw_bitmap(5, 0, noSignal, 16, 15);//no anten
-	}
-	
-	//////////server conection /////////
-	
-	if(isConnect == 0&&rssiIntValue!=0)//if server  not conected "!" blinking beside rssi antenna
-	{
-		if	(blinker<4)
+		if(oledState!=0)
 		{
-	   ssd1306_SetCursor(1,2);
-		 ssd1306_WriteString("!", Font_7x10, White);
-			blinker++;
+				memset(oledStr,NULL, size);
+				snprintf(oledStr,sizeof(oledStr)," %02d:%02d",  Time.Hours, Time.Minutes);
+				ssd1306_SetCursor(84, 3);
+				ssd1306_WriteString(oledStr, Font_7x10, White);//show time on oled
+				//oledPageNumber
+				ssd1306_SetCursor(48,3);
+		//		memset(oledStr,NULL, size);
+		//		snprintf(oledStr,sizeof(oledStr),"P:%d/2", oledPageNumber+1);
+		//		ssd1306_WriteString(oledStr, Font_7x10, White);
+				ssd1306_draw_bitmap(1, 17, line, 128, 2);//line
+						//////////RSSI antenna conection ///////// 
+			ssd1306_SetCursor(0,0);
+			if( rssiIntValue<32&&rssiIntValue>19)//rssi Excellent
+			{
+				 ssd1306_clear_screen(5,23,0,15);
+					ssd1306_draw_bitmap(5, 2, rssiSingal_5, 16, 11);//RSSI antenna
+			}
+			else if( rssiIntValue<20&&rssiIntValue>14)//rssi Good
+			{
+					ssd1306_clear_screen(5,23,0,15);
+					ssd1306_draw_bitmap(5, 2, rssiSingal_4, 16, 11);//RSSI antenna
+			}
+			else if( rssiIntValue<15&&rssiIntValue>9)//rssi Ok
+			{
+					ssd1306_clear_screen(5,23,0,15);
+					ssd1306_draw_bitmap(5, 2, rssiSingal_3, 16, 11);//RSSI antenna
+			}
+			else if( rssiIntValue<10&&rssiIntValue>1)//rssi Marginal
+			{
+					ssd1306_clear_screen(5,23,0,15);
+					ssd1306_draw_bitmap(5, 2, rssiSingal_2, 16, 11);//RSSI antenna
+			}
+			else
+			{
+					ssd1306_clear_screen(5,23,0,12);
+					ssd1306_draw_bitmap(5, 0, noSignal, 16, 15);//no anten
+			}
+			
+			//////////server conection /////////
+			
+			if(isConnect == 0&&rssiIntValue!=0)//if server  not conected "!" blinking beside rssi antenna
+			{
+				if	(blinker<4)
+				{
+				 ssd1306_SetCursor(1,2);
+				 ssd1306_WriteString("!", Font_7x10, White);
+					blinker++;
+				}
+				else if(blinker<8)
+				{
+				 ssd1306_SetCursor(1,2);
+				 ssd1306_WriteString(" ", Font_7x10, White);
+				 blinker++;
+				}
+				if(blinker==8)
+					blinker=0;
+			}
+			if(isConnect == 1&&rssiIntValue!=0)//if server  conected "s" blinking beside rssi antenna
+			{
+				if	(blinker<6)
+				{
+				 ssd1306_SetCursor(1,2);
+				 ssd1306_WriteString("s", Font_7x10, White);
+					blinker++;
+				}
+				else if(blinker<8)
+				{
+				 ssd1306_SetCursor(1,2);
+				 ssd1306_WriteString(" ", Font_7x10, White);
+				 blinker++;
+				}
+				if(blinker==8)
+					blinker=0;
+			}
+			
+			////////lora antenaa////////
+			
+			ssd1306_draw_bitmap(25, 0, noSignal, 16, 15);//no anten
+			
 		}
-		else if(blinker<8)
-		{
-		 ssd1306_SetCursor(1,2);
-		 ssd1306_WriteString(" ", Font_7x10, White);
-		 blinker++;
-		}
-		if(blinker==8)
-			blinker=0;
-	}
-	if(isConnect == 1&&rssiIntValue!=0)//if server  conected "s" blinking beside rssi antenna
-	{
-		if	(blinker<6)
-		{
-	   ssd1306_SetCursor(1,2);
-		 ssd1306_WriteString("s", Font_7x10, White);
-			blinker++;
-		}
-		else if(blinker<8)
-		{
-		 ssd1306_SetCursor(1,2);
-		 ssd1306_WriteString(" ", Font_7x10, White);
-		 blinker++;
-		}
-		if(blinker==8)
-			blinker=0;
-	}
-	
-	////////lora antenaa////////
-	
-	ssd1306_draw_bitmap(25, 0, noSignal, 16, 15);//no anten
-	
-
 	
 	if(oledPageNumber==0)
 	{
@@ -2176,11 +2182,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 			case 0: 
 					 if(2<tim5CallbackCounter&&tim5CallbackCounter<10)
 					 {
-						 ssd1306_draw_bitmap(20, 25, ldm, 104, 40);//show ldm logo for 4 sec
+						 ssd1306_draw_bitmap(15, 15, ldm, 104, 40);//show ldm logo for 4 sec
 					 }
 					 else if (tim5CallbackCounter&&tim5CallbackCounter>10)
 					 {
-						ssd1306_clear_screen(0,128,20,64);	//clear logo on logo
+						ssd1306_clear_screen(0,128,0,64);	//clear logo on logo
 						oledState=1; // go to next state
 					 }
 			break;		 
@@ -2253,9 +2259,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 						ssd1306_draw_bitmap(60, 34, tapOff , 20, 30);//tapOff
 					
 					if(HAL_GPIO_ReadPin(relay2_GPIO_Port, relay2_Pin))
-						ssd1306_draw_bitmap(85, 34, tapOn , 20, 30);//tapOn
+						ssd1306_draw_bitmap(90, 34, tapOn , 20, 30);//tapOn
 					else
-						ssd1306_draw_bitmap(85, 34, tapOff , 20, 30);//tapOff
+						ssd1306_draw_bitmap(90, 34, tapOff , 20, 30);//tapOff
 					
 //					if(HAL_GPIO_ReadPin(relay3_GPIO_Port, relay3_Pin))
 //						ssd1306_draw_bitmap(60, 34, tapOn , 20, 30);//tapOn	
@@ -2415,6 +2421,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 					}
 			break;
 		}
+		
 	}
 	else if(oledPageNumber==1)
 	{
@@ -2460,6 +2467,7 @@ void Error_Handler(void)
 	DEBUG("\n\rERROR HANDLER\n\r");
   /* USER CODE END Error_Handler_Debug */
 }
+
 
 #ifdef  USE_FULL_ASSERT
 /**

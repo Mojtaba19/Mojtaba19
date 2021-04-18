@@ -77,7 +77,7 @@ extern SPI_HandleTypeDef SSD1306_SPI_PORT;
 
 // SSD1306 width in pixels
 #ifndef SSD1306_WIDTH
-#define SSD1306_WIDTH           128
+#define SSD1306_WIDTH           130
 #endif
 
 // some LEDs don't display anything in first two columns
@@ -106,10 +106,18 @@ char ssd1306_WriteChar(char ch, FontDef Font, SSD1306_COLOR color);
 char ssd1306_WriteString(char* str, FontDef Font, SSD1306_COLOR color);
 void ssd1306_SetCursor(uint8_t x, uint8_t y);
 void ssd1306_clear_screen(uint8_t xPosStart,uint8_t xPosEnd,uint8_t yPosStart,uint8_t yPosEnd);
+void ssd1306_SetContrast(const uint8_t value);
+void ssd1306_SetDisplayOn(const uint8_t on);
 //Draw Bitmap
 void ssd1306_draw_bitmap(uint8_t chXpos, uint8_t chYpos, const uint8_t *pchBmp, uint8_t chWidth, uint8_t chHeight);
-
-
+///////////////////////
+///////////////////////
+void ssd1306_Line(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR color);
+void ssd1306_DrawArc(uint8_t x, uint8_t y, uint8_t radius, uint16_t start_angle, uint16_t sweep, SSD1306_COLOR color);
+void ssd1306_DrawCircle(uint8_t par_x, uint8_t par_y, uint8_t par_r, SSD1306_COLOR color);
+void ssd1306_DrawRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR color);
+///////////////////////
+///////////////////////
 
 // Low-level procedures
 void ssd1306_Reset(void);
