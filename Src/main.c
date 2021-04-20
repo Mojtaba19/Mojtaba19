@@ -256,7 +256,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 	TH = malloc(2*sizeof(float));
 	DWT_Init();
-
+	ssd1306_Init();
 	
 	//	HAL_RTCEx_BKUPWrite(&hrtc,1,8260);
 	//	HAL_RTCEx_BKUPWrite(&hrtc,2,8500);
@@ -276,9 +276,9 @@ int main(void)
 	
 	initializingFlag=1; //initializing seting is starting
 	DEBUG("\n\r Tim start IT... \n\r");
-	HAL_TIM_Base_Start_IT(&htim5);
+		HAL_TIM_Base_Start_IT(&htim5);
 	DEBUG("\n\r    --DONE--\n\r");
-	ssd1306_Init();
+	
 #if(__FIRSTTIME_PROGRAMMING__==1)		
 	//*
 	DEBUG("\n\rSETTING DATE AND TIME...");	
@@ -487,23 +487,22 @@ int main(void)
 	
 	//*
 	DEBUG("\n\rGETTING RSSI ANTENNA ...\n\r");
-
-	Sim80x_StatusTypeDef=sim80x_ATC("AT+CSQ\r\n",50);// SIM800 RSSI AT Command
-	if(Sim80x_StatusTypeDef==HAL_OK)
-		{
-		//parsing sim800 response:	
-		startAnswer	= strstr(RxBuffer, "+CSQ:")+5;
-		endAnswer		= strstr(RxBuffer, ",");
-		for(int i=(startAnswer-RxBuffer); i<(endAnswer-RxBuffer); i++)
-			rssiStrValue[i-(startAnswer-RxBuffer)] = RxBuffer[i];	//ContentStr=RSSI value of sim800
-		rssiIntValue= (uint8_t)atoi(rssiStrValue);
-		}
-		else
-		{				
-			 DEBUG( "***\r\n");
-			 DEBUG("RSSI: Can not read RSSI from sim80x\r\n");
-			 DEBUG( "***\r\n");
-		}
+		Sim80x_StatusTypeDef=sim80x_ATC("AT+CSQ\r\n",50);// SIM800 RSSI AT Command
+		if(Sim80x_StatusTypeDef==HAL_OK)
+			{
+			//parsing sim800 response:	
+			startAnswer	= strstr(RxBuffer, "+CSQ:")+5;
+			endAnswer		= strstr(RxBuffer, ",");
+			for(int i=(startAnswer-RxBuffer); i<(endAnswer-RxBuffer); i++)
+				rssiStrValue[i-(startAnswer-RxBuffer)] = RxBuffer[i];	//ContentStr=RSSI value of sim800
+			rssiIntValue= (uint8_t)atoi(rssiStrValue);
+			}
+			else
+			{				
+				 DEBUG( "***\r\n");
+				 DEBUG("RSSI: Can not read RSSI from sim80x\r\n");
+				 DEBUG( "***\r\n");
+			}
 	DEBUG("\n\r    --DONE--\n\r");
 		
 	DEBUG("\n\rSTOPING HTTP...\n\r");	
@@ -567,9 +566,9 @@ int main(void)
 	 	 HAL_RTCEx_BKUPWrite(&hrtc, LAST_CURRENT_TIME_STAMP, currentTimeStamp);//stor time stamp into eeprom
 			
 		 sim80x_HTTP_Start();
-//		GetAllPrograms();
-//		HAL_Delay(6000);
-//		GetAllProcessPrograms();
+		GetAllPrograms();
+		HAL_Delay(5000);
+		GetAllProcessPrograms();
 		get_output_result = GetOutput();
 			/*
 				get_output_result has 5 values:
@@ -2312,33 +2311,33 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 			break; 
 			case 4:
 
-					ssd1306_SetCursor(40,26);//show "Getting process programs" until Getting process programs done
-					ssd1306_WriteString("Getting ", Font_7x10, White);
-					ssd1306_SetCursor(10,39);
+					ssd1306_SetCursor(29,26);//show "Getting process programs" until Getting process programs done
+					ssd1306_WriteString("Downloading ", Font_7x10, White);
+					ssd1306_SetCursor(9,39);
 					ssd1306_WriteString("process programs", Font_7x10, White);
 						switch(dotPointCounter) // show dot points under "Getting process programs" until Getting process programs done
 						{
 							case 0:
-								ssd1306_DrawPixel(56,55, White);//"Getting process programs."
+								ssd1306_DrawPixel(53,55, White);//"Getting process programs."
 								dotPointCounter++;
 							break;
 
 							case 1:
-								ssd1306_DrawPixel(56,55, White);//"Getting process programs . ."
-								ssd1306_DrawPixel(61,55, White);
+								ssd1306_DrawPixel(53,55, White);//"Getting process programs . ."
+								ssd1306_DrawPixel(58,55, White);
 								dotPointCounter++;
 							break;
 							case 2:
-								ssd1306_DrawPixel(56,55, White);//"Getting process programs . . ."
-								ssd1306_DrawPixel(61,55, White);
-								ssd1306_DrawPixel(66,55, White);
+								ssd1306_DrawPixel(53,55, White);//"Getting process programs . . ."
+								ssd1306_DrawPixel(58,55, White);
+								ssd1306_DrawPixel(63,55, White);
 								dotPointCounter++;
 							break;
 							case 3:
 								dotPointCounter=0;
-								ssd1306_DrawPixel(56,55,  Black);
-								ssd1306_DrawPixel(61,55, Black);
-								ssd1306_DrawPixel(66,55, Black);
+								ssd1306_DrawPixel(53,55,  Black);
+								ssd1306_DrawPixel(58,55, Black);
+								ssd1306_DrawPixel(63,55, Black);
 							break;
 						}
 				if(	getProcessProgramsStarting==0)
@@ -2378,38 +2377,40 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 					}
 			break;
 			case 6:
-					ssd1306_SetCursor(4,26);//show "Getting  programs" until Getting  programs done
-					ssd1306_WriteString("Getting Programs ", Font_7x10, White);
+					ssd1306_SetCursor(29,24);//show "Getting  programs" until Getting  programs done
+					ssd1306_WriteString("Downloading ", Font_7x10, White);
+					ssd1306_SetCursor(41,37);
+					ssd1306_WriteString("Programs", Font_7x10, White);
 						switch(dotPointCounter) // show dot points under "Getting  programs" until Getting  programs done
 						{
 							case 0:
-								ssd1306_DrawPixel(56,42, White);//"Getting  programs."
+								ssd1306_DrawPixel(61,53, White);//"Getting  programs."
 								dotPointCounter++;
 							break;
 
 							case 1:
-								ssd1306_DrawPixel(56,42, White);//"Getting  programs . ."
-								ssd1306_DrawPixel(61,42, White);
+								ssd1306_DrawPixel(61,53, White);//"Getting  programs . ."
+								ssd1306_DrawPixel(66,53, White);
 								dotPointCounter++;
 							break;
 							case 2:
-								ssd1306_DrawPixel(56,42, White);//"Getting  programs . . ."
-								ssd1306_DrawPixel(61,42, White);
-								ssd1306_DrawPixel(66,42, White);
+								ssd1306_DrawPixel(61,53, White);//"Getting  programs . . ."
+								ssd1306_DrawPixel(66,53, White);
+								ssd1306_DrawPixel(71,53, White);
 								dotPointCounter++;
 							break;
 							case 3:
 								dotPointCounter=0;
-								ssd1306_DrawPixel(56,42,  Black);
-								ssd1306_DrawPixel(61,42, Black);
-								ssd1306_DrawPixel(66,42, Black);
+								ssd1306_DrawPixel(61,53,  Black);
+								ssd1306_DrawPixel(66,53, Black);
+								ssd1306_DrawPixel(71,53, Black);
 							break;
 						}
 				if(	getProgramsStarting==0)
 				{
 					oledState=7;	
 					lastTim5CallbackCounter=tim5CallbackCounter;
-					ssd1306_clear_screen(55,128,41,64);//clear main section of screen
+					ssd1306_clear_screen(55,128,52,64);//clear main section of screen
 				}
 			break;
 			case 7:
@@ -2417,12 +2418,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 					{
 						if(getProgramsStatus==1)//Getting process programs is successful
 						{
-							ssd1306_SetCursor(53,42);
+							ssd1306_SetCursor(55,53);
 							ssd1306_WriteString("Done", Font_7x10, White);
 						}
 						else //Getting process programs is not successful
 						{
-							ssd1306_SetCursor(48,42);
+							ssd1306_SetCursor(50,53);
 							ssd1306_WriteString("Error!", Font_7x10, White);	
 						}
 						
