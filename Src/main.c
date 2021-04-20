@@ -160,11 +160,11 @@ uint8_t									unfinishedEventFlag=0;					//It is set to 1 if we have an unfini
 uint8_t 								getProcessProgramsStatus=0;			//Getting process program  unsuccessful /successful  flag. used in external bottons & Getting process program section in oled
 uint8_t 								getProgramsStatus=0;						//Getting  program  unsuccessful /successful  flag used in Getting  program section in oled
 uint8_t									initializingFlag=0;							//set to 1 when initial setting started and then set to 0 when it done and remain 0 in all program
-uint8_t									tim5CallbackCounter=0;					//a counter that used in HAL_TIM_PeriodElapsedCallback function
+uint32_t								tim5CallbackCounter=0;					//a counter that used in HAL_TIM_PeriodElapsedCallback function
 uint8_t									dotPointCounter=0;							// count dotpoint in initializing in HAL_TIM_PeriodElapsedCallback function
 uint8_t 								blinker=0;											//used in blinking in server conection section in oled.
 uint8_t									oledState=0;										// oled screen is a FSM and oledState is including its state.
-uint8_t									lastTim5CallbackCounter=0;			//used to save last time in every state of oled screen
+uint32_t								lastTim5CallbackCounter=0;			//used to save last time in every state of oled screen
 uint8_t									getProcessProgramsStarting=0;		//1 if we start to get procees programs used in showing on oled and 0 if get procees programs to be ended. 
 uint8_t									getProgramsStarting=0;					//1 if we start to get  programs used in showing on oled 0 if get programs to be ended. 
 uint32_t								lastTimeStamp;									//used when read last current time  stamp from eeprom
@@ -648,6 +648,7 @@ int main(void)
 			sim80x_HTTP_Stop();
 			action=0;
 			tim5CallbackCounter=0;
+			lastTim5CallbackCounter=0;
 		}
     /* USER CODE END WHILE */
 
@@ -2121,7 +2122,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 				ssd1306_SetCursor(84, 3);
 				ssd1306_WriteString(oledStr, Font_7x10, White);//show time on oled
 				ssd1306_draw_bitmap(1, 17, line, 128, 2);//line under time and antenna
-			
+			  memset(oledStr,NULL, size);
+			  snprintf(oledStr,sizeof(oledStr),"\n\r tim5CallbackCounter:%d  lastTim5CallbackCounter:%d\n\r", tim5CallbackCounter, lastTim5CallbackCounter);
+			  DEBUG(oledStr);
 						//////////RSSI antenna conection ///////// 
 			
 				ssd1306_SetCursor(0,0);
