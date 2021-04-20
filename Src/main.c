@@ -2202,11 +2202,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 			case 0: 
 					 if(2<tim5CallbackCounter&&tim5CallbackCounter<10)
 					 {
-						 ssd1306_draw_bitmap(15, 15, ldm, 104, 40);//show ldm logo for 4 sec
+						 ssd1306_draw_bitmap(10, 10, ldm, 119, 48);//show ldm logo for 4 sec
 					 }
 					 else if (tim5CallbackCounter&&tim5CallbackCounter>10)
 					 {
-						ssd1306_clear_screen(0,128,0,64);	//clear logo 
+						ssd1306_clear_screen(0,130,0,64);	//clear logo 
 						oledState=1; // go to next state
 					 }
 			break;		 
