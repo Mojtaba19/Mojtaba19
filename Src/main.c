@@ -141,7 +141,9 @@ char 						    		RxBuffer[size];									// A buffer for SIM800's response
 uint8_t                 buttonsStatus[2]={0,0};				  //status of the 2 external buttons 
 char 										outputsStatus[size];					  // used in "sim80x_Send_Status" 
 char  						  		rssiStrValue[5];								// include RSSI string value .
-uint8_t 						  	rssiIntValue=0;										// include RSSI int value .
+char *									startAnswer; 										//used in getting rssi antenna in initial section
+char *									endAnswer;											//used in getting rssi antenna in initial section
+uint8_t 						  	rssiIntValue=0;									//include RSSI intiger value .
 
 char										processProgram[size];						//used in processProgramParser
 
@@ -164,8 +166,8 @@ uint8_t 								blinker=0;											//used in blinking in oled
 uint8_t									oledState=0;										// oled screen state 
 uint8_t									lastTim5CallbackCounter=0;			//used to save last time in every state of oled screen
 uint8_t									oledPageNumber=0;								//screen page number in oled
-uint8_t									getProcessProgramsStarting=0;			//1 if we start to get procees programs used in showing on oled
-uint8_t									getProgramsStarting=0;						//1 if we start to get  programs used in showing on oled
+uint8_t									getProcessProgramsStarting=0;		//1 if we start to get procees programs used in showing on oled
+uint8_t									getProgramsStarting=0;					//1 if we start to get  programs used in showing on oled
 uint32_t								lastTimeStamp;									//used when read last current time  stamp from eeprom
 uint32_t								lastEventTimeStamp;							//used when read last event time  stamp from eeprom
 
@@ -258,9 +260,9 @@ int main(void)
 	
 	//	HAL_RTCEx_BKUPWrite(&hrtc,1,8260);
 	//	HAL_RTCEx_BKUPWrite(&hrtc,2,8500);
-			char test_str[50];
-	sprintf(test_str,"\n\rstatus is: %d\n\r", (uint8_t)HAL_I2C_IsDeviceReady(&hi2c2, SSD1306_I2C_ADDR, 10, 100));
-	DEBUG(test_str);
+//			char test_str[50];
+//	sprintf(test_str,"\n\rstatus is: %d\n\r", (uint8_t)HAL_I2C_IsDeviceReady(&hi2c2, SSD1306_I2C_ADDR, 10, 100));
+//	DEBUG(test_str);
 	DEBUG("\n\r************************************************");
 	DEBUG("\n\r*            Petus: Baghyar - V2.2             *");
 	DEBUG("\n\r************************************************");
@@ -337,8 +339,8 @@ int main(void)
 	DEBUG("\n\rAPPLYING LAST OUTPUT STATUS...");
 		HAL_Delay(500);
 		processFlag=HAL_RTCEx_BKUPRead(&hrtc, LAST_PROCESS_FLAG_STATUS);
-		//LastStatus = (uint8_t)HAL_RTCEx_BKUPRead(&hrtc, LAST_STATUS_ADDRESS);	
-		LastStatus=32;
+		LastStatus = (uint8_t)HAL_RTCEx_BKUPRead(&hrtc, LAST_STATUS_ADDRESS);	
+		//LastStatus=32;
 		ApplyAction(LastStatus);
 	DEBUG("\n\r    --DONE--\n\r");	
 	/*
@@ -350,6 +352,7 @@ int main(void)
 	//*/
 	
 	//*
+
 	DEBUG("\n\rGETTING DATE AND TIME...");
 		HAL_RTC_GetTime(&hrtc, &Time, RTC_FORMAT_BIN);
 		HAL_RTC_GetDate(&hrtc, &Date, RTC_FORMAT_BIN);
@@ -483,6 +486,26 @@ int main(void)
 	//*/
 	
 	//*
+	DEBUG("\n\rGETTING RSSI ANTENNA ...\n\r");
+
+	Sim80x_StatusTypeDef=sim80x_ATC("AT+CSQ\r\n",50);// SIM800 RSSI AT Command
+	if(Sim80x_StatusTypeDef==HAL_OK)
+		{
+		//parsing sim800 response:	
+		startAnswer	= strstr(RxBuffer, "+CSQ:")+5;
+		endAnswer		= strstr(RxBuffer, ",");
+		for(int i=(startAnswer-RxBuffer); i<(endAnswer-RxBuffer); i++)
+			rssiStrValue[i-(startAnswer-RxBuffer)] = RxBuffer[i];	//ContentStr=RSSI value of sim800
+		rssiIntValue= (uint8_t)atoi(rssiStrValue);
+		}
+		else
+		{				
+			 DEBUG( "***\r\n");
+			 DEBUG("RSSI: Can not read RSSI from sim80x\r\n");
+			 DEBUG( "***\r\n");
+		}
+	DEBUG("\n\r    --DONE--\n\r");
+		
 	DEBUG("\n\rSTOPING HTTP...\n\r");	
 		sim80x_HTTP_Stop();
 	DEBUG("\n\r    --DONE--\n\r");	
@@ -613,7 +636,7 @@ int main(void)
 		
 			sim80x_Send_Status(SERVER_IP); //ContentStr is the JSON contain RSSI value , OUTPUT Status and external Buttons Status that  post in server
 			rssiIntValue= (uint8_t)atoi(rssiStrValue);//convert rssiStrValue to int
-			if(Sim80x_StatusTypeDef!=HAL_OK)//if sim800 response OK to rssi at_command  
+			if(Sim80x_StatusTypeDef!=HAL_OK)//if sim800 response is not OK to rssi at_command  
 			{				
 				 DEBUG( "***\r\n");
 				 DEBUG("RSSI: Can not read RSSI from sim80x\r\n");
@@ -2089,6 +2112,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	if(htim->Instance==TIM5)
 	{
 		
+		
 		HAL_RTC_GetTime(&hrtc, &Time, RTC_FORMAT_BIN);
 		HAL_RTC_GetDate(&hrtc, &Date, RTC_FORMAT_BIN);
 		tim5CallbackCounter++;
@@ -2098,70 +2122,67 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 				snprintf(oledStr,sizeof(oledStr)," %02d:%02d",  Time.Hours, Time.Minutes);
 				ssd1306_SetCursor(84, 3);
 				ssd1306_WriteString(oledStr, Font_7x10, White);//show time on oled
-				//oledPageNumber
-				ssd1306_SetCursor(48,3);
-		//		memset(oledStr,NULL, size);
-		//		snprintf(oledStr,sizeof(oledStr),"P:%d/2", oledPageNumber+1);
-		//		ssd1306_WriteString(oledStr, Font_7x10, White);
 				ssd1306_draw_bitmap(1, 17, line, 128, 2);//line
+			
 						//////////RSSI antenna conection ///////// 
+			
 			ssd1306_SetCursor(0,0);
-			if( rssiIntValue<32&&rssiIntValue>19)//rssi Excellent
+			if( rssiIntValue<32&&rssiIntValue>21)//rssi Excellent
 			{
-				 ssd1306_clear_screen(5,23,0,15);
-					ssd1306_draw_bitmap(5, 2, rssiSingal_5, 16, 11);//RSSI antenna
+				ssd1306_clear_screen(5,30,0,15);
+				ssd1306_draw_bitmap(7, 2, rssiSingal_4, 22, 11);//RSSI antenna: 4
 			}
-			else if( rssiIntValue<20&&rssiIntValue>14)//rssi Good
+			else if( rssiIntValue<22&&rssiIntValue>16)//rssi Good
 			{
-					ssd1306_clear_screen(5,23,0,15);
-					ssd1306_draw_bitmap(5, 2, rssiSingal_4, 16, 11);//RSSI antenna
+				ssd1306_clear_screen(5,30,0,15);
+				ssd1306_draw_bitmap(7, 2, rssiSingal_3, 22, 11);//RSSI antenna: 3
 			}
-			else if( rssiIntValue<15&&rssiIntValue>9)//rssi Ok
+			else if( rssiIntValue<17&&rssiIntValue>11)//rssi Ok
 			{
-					ssd1306_clear_screen(5,23,0,15);
-					ssd1306_draw_bitmap(5, 2, rssiSingal_3, 16, 11);//RSSI antenna
+					ssd1306_clear_screen(5,30,0,15);
+				ssd1306_draw_bitmap(7, 2, rssiSingal_2, 22, 11);//RSSI antenna: 2
 			}
-			else if( rssiIntValue<10&&rssiIntValue>1)//rssi Marginal
+			else if( rssiIntValue<12&&rssiIntValue>3)//rssi Marginal
 			{
-					ssd1306_clear_screen(5,23,0,15);
-					ssd1306_draw_bitmap(5, 2, rssiSingal_2, 16, 11);//RSSI antenna
+					ssd1306_clear_screen(5,30,0,15);
+				ssd1306_draw_bitmap(7, 2, rssiSingal_1, 22, 11);//RSSI antenna: 1
 			}
 			else
 			{
-					ssd1306_clear_screen(5,23,0,12);
-					ssd1306_draw_bitmap(5, 0, noSignal, 16, 15);//no anten
+					ssd1306_clear_screen(5,30,0,12);
+					ssd1306_draw_bitmap(7, 0, noSignal, 16, 15);//no anten
 			}
 			
 			//////////server conection /////////
 			
-			if(isConnect == 0&&rssiIntValue!=0)//if server  not conected "!" blinking beside rssi antenna
+			if(isConnect == 0&&rssiIntValue!=0&&get_output_result==0)//if server  not conected "!" blinking beside rssi antenna
 			{
 				if	(blinker<4)
 				{
-				 ssd1306_SetCursor(1,2);
+				 ssd1306_SetCursor(1,5);
 				 ssd1306_WriteString("!", Font_7x10, White);
 					blinker++;
 				}
 				else if(blinker<8)
 				{
-				 ssd1306_SetCursor(1,2);
+				 ssd1306_SetCursor(1,5);
 				 ssd1306_WriteString(" ", Font_7x10, White);
 				 blinker++;
 				}
 				if(blinker==8)
 					blinker=0;
 			}
-			if(isConnect == 1&&rssiIntValue!=0)//if server  conected "s" blinking beside rssi antenna
+			if(isConnect == 1&&rssiIntValue!=0&&(get_output_result==1||get_output_result==2||get_output_result==3||get_output_result==4))//if server  conected "s" blinking beside rssi antenna
 			{
 				if	(blinker<6)
 				{
-				 ssd1306_SetCursor(1,2);
+				 ssd1306_SetCursor(1,5);
 				 ssd1306_WriteString("s", Font_7x10, White);
 					blinker++;
 				}
 				else if(blinker<8)
 				{
-				 ssd1306_SetCursor(1,2);
+				 ssd1306_SetCursor(1,5);
 				 ssd1306_WriteString(" ", Font_7x10, White);
 				 blinker++;
 				}
@@ -2171,7 +2192,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 			
 			////////lora antenaa////////
 			
-			ssd1306_draw_bitmap(25, 0, noSignal, 16, 15);//no anten
+			//ssd1306_draw_bitmap(25, 0, noSignal, 16, 15);//no anten
 			
 		}
 	
@@ -2186,7 +2207,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 					 }
 					 else if (tim5CallbackCounter&&tim5CallbackCounter>10)
 					 {
-						ssd1306_clear_screen(0,128,0,64);	//clear logo on logo
+						ssd1306_clear_screen(0,128,0,64);	//clear logo 
 						oledState=1; // go to next state
 					 }
 			break;		 
@@ -2219,16 +2240,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 								ssd1306_DrawPixel(103,38, Black);
 							break;
 						}
-						if(getProcessProgramsStarting)
-						{
-							ssd1306_clear_screen(0,128,20,64);	//clear logo on logo
-							oledState=4; 
-						}
-						else if(getProgramsStarting)
-						{
-							ssd1306_clear_screen(0,128,20,64);	//clear logo on logo
-							oledState=6; 
-						}
+//						if(getProcessProgramsStarting)
+//						{
+//							ssd1306_clear_screen(0,128,20,64);	//clear logo on logo
+//							oledState=4; 
+//						}
+//						else if(getProgramsStarting)
+//						{
+//							ssd1306_clear_screen(0,128,20,64);	//clear logo 
+//							oledState=6; 
+//						}
 					}
 					else
 					{
