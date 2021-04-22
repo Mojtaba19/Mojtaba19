@@ -63,7 +63,7 @@ extern char 							rssiStrValue[5];
 extern uint8_t						ErrorCounter;
 extern uint8_t						action;
 extern uint8_t		        buttonsStatus[2];			//status of the 2 external buttons 
-
+extern uint8_t 						simCardGprsOk;
 extern HAL_StatusTypeDef	Sim80x_StatusTypeDef;
 /* Functions */
 HAL_StatusTypeDef sim80x_ATC(char * ATCommand , uint32_t Timeout);

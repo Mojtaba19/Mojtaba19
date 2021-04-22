@@ -160,16 +160,16 @@ uint8_t									unfinishedEventFlag=0;					//It is set to 1 if we have an unfini
 uint8_t 								getProcessProgramsStatus=0;			//Getting process program  unsuccessful /successful  flag. used in external bottons & Getting process program section in oled
 uint8_t 								getProgramsStatus=0;						//Getting  program  unsuccessful /successful  flag used in Getting  program section in oled
 uint8_t									initializingFlag=0;							//set to 1 when initial setting started and then set to 0 when it done and remain 0 in all program
-uint32_t								tim5CallbackCounter=0;					//a counter that used in HAL_TIM_PeriodElapsedCallback function
+uint16_t								tim5CallbackCounter=0;					//a counter that used in HAL_TIM_PeriodElapsedCallback function
 uint8_t									dotPointCounter=0;							// count dotpoint in initializing in HAL_TIM_PeriodElapsedCallback function
 uint8_t 								blinker=0;											//used in blinking in server conection section in oled.
 uint8_t									oledState=0;										// oled screen is a FSM and oledState is including its state.
-uint32_t								lastTim5CallbackCounter=0;			//used to save last time in every state of oled screen
+uint16_t								lastTim5CallbackCounter=0;			//used to save last time in every state of oled screen
 uint8_t									getProcessProgramsStarting=0;		//1 if we start to get procees programs used in showing on oled and 0 if get procees programs to be ended. 
 uint8_t									getProgramsStarting=0;					//1 if we start to get  programs used in showing on oled 0 if get programs to be ended. 
 uint32_t								lastTimeStamp;									//used when read last current time  stamp from eeprom
 uint32_t								lastEventTimeStamp;							//used when read last event time  stamp from eeprom
-
+uint8_t									simCardGprsOk=0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -486,6 +486,8 @@ int main(void)
 	
 	//*
 	DEBUG("\n\rGETTING RSSI ANTENNA ...\n\r");
+	if(simCardGprsOk==1)
+	{
 		Sim80x_StatusTypeDef=sim80x_ATC("AT+CSQ\r\n",50);// SIM800 RSSI AT Command
 		if(Sim80x_StatusTypeDef==HAL_OK)
 			{
@@ -500,8 +502,18 @@ int main(void)
 			{				
 				 DEBUG( "***\r\n");
 				 DEBUG("RSSI: Can not read RSSI from sim80x\r\n");
+			 	 rssiIntValue=0;
 				 DEBUG( "***\r\n");
 			}
+		}
+	else
+	{
+				 DEBUG( "***\r\n");
+				 DEBUG("SIM GPRS ERROR\r\n");
+			 	 rssiIntValue=0;
+				 DEBUG( "***\r\n");		
+	}
+		
 	DEBUG("\n\r    --DONE--\n\r");
 		
 	DEBUG("\n\rSTOPING HTTP...\n\r");	
@@ -551,7 +563,6 @@ int main(void)
 		// This section runs each 5 minutes
 	
 	if(action){
-			
 		 uint32_t 							currentTimeStamp = 0;		//used when convert current time to time stamp
 		 struct tm  						currentTime;
 		 currentTime.tm_year	= Date.Year + 2000  - 1900;
@@ -637,6 +648,7 @@ int main(void)
 			if(Sim80x_StatusTypeDef!=HAL_OK)//if sim800 response is not OK to rssi at_command  
 			{				
 				 DEBUG( "***\r\n");
+			 	 rssiIntValue=0;
 				 DEBUG("RSSI: Can not read RSSI from sim80x\r\n");
 				 DEBUG( "***\r\n");
 			}
@@ -2122,9 +2134,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 				ssd1306_SetCursor(84, 3);
 				ssd1306_WriteString(oledStr, Font_7x10, White);//show time on oled
 				ssd1306_draw_bitmap(1, 17, line, 128, 2);//line under time and antenna
+			 if(tim5CallbackCounter%40==0)
+			 {
 			  memset(oledStr,NULL, size);
 			  snprintf(oledStr,sizeof(oledStr),"\n\r tim5CallbackCounter:%d  lastTim5CallbackCounter:%d\n\r", tim5CallbackCounter, lastTim5CallbackCounter);
 			  DEBUG(oledStr);
+			 }
 						//////////RSSI antenna conection ///////// 
 			
 				ssd1306_SetCursor(0,0);
@@ -2150,13 +2165,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 				}
 				else
 				{
-						ssd1306_clear_screen(5,30,0,12);
+						ssd1306_clear_screen(5,30,0,15);
 						ssd1306_draw_bitmap(7, 0, noSignal, 16, 15);//no anten
 				}
 				
 				//////////server conection /////////
 				
-				if(isConnect == 0&&get_output_result==0)//if server  not conected "!" blinking beside rssi antenna.it is apply when get_output_result has taken value 0
+				if(isConnect == 0&&get_output_result==0&&rssiIntValue!=0)//if server  not conected "!" blinking beside rssi antenna.it is apply when get_output_result has taken value 0 and rssi value !=0
 				{
 					if	(blinker<4)//show "!" for 2 sec
 					{
@@ -2173,7 +2188,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 					if(blinker==8)
 						blinker=0;
 				}
-				if(isConnect == 1&&(get_output_result==1||get_output_result==2||get_output_result==3||get_output_result==4))//if server  conected "s" blinking beside rssi antenna. it is apply when and get_output_result has taken value other than 0
+				if(isConnect == 1&&rssiIntValue!=0&&(get_output_result==1||get_output_result==2||get_output_result==3||get_output_result==4))//if server  conected "s" blinking beside rssi antenna. it is apply when and get_output_result has taken value other than 0 and srssi value !=0
 				{
 					if	(blinker<6)//show "s" for 3 sec
 					{

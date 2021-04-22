@@ -148,7 +148,10 @@ HAL_StatusTypeDef sim80x_SendSMS(char * phoneNumber , char * msg, uint32_t Timeo
   * @retval HAL status
   */
 HAL_StatusTypeDef sim80x_HTTP_Start(void){
-	sim80x_ATC("AT+SAPBR=3,1,\"Contype\",\"GPRS\"\r\n",1000);
+	if (sim80x_ATC("AT+SAPBR=3,1,\"Contype\",\"GPRS\"\r\n",1000)==HAL_OK)
+		simCardGprsOk=1;
+	else
+		simCardGprsOk=0;
 	sim80x_ATC("AT+SAPBR=3,1,\"APN\",\"internet\"\r\n",1000);
 	sim80x_ATC("AT+SAPBR=1,1\r\n",3000);
 	sim80x_ATC("AT+SAPBR=2,1\r\n",300);
@@ -289,10 +292,15 @@ void sim80x_Send_Status(char*IP){
 		endAnswer		= strstr(RxBuffer, ",");
 		for(int i=(startAnswer-RxBuffer); i<(endAnswer-RxBuffer); i++)
 			rssiStrValue[i-(startAnswer-RxBuffer)] = RxBuffer[i];	//ContentStr=RSSI value of sim800
-
+		}
+		if(simCardGprsOk==0)// if gprs is not enable then rssi value =0
+		{
+			memset(rssiStrValue,NULL,5);
+			memcpy(rssiStrValue,"00",5);
+		}
+		
 		snprintf(sendStatus,100,"{\"sc\":\"%s\",\"nc\":\"%s\",\"ebc\": \"%d%d\"}\r\n",outputsStatus,rssiStrValue,buttonsStatus[1],buttonsStatus[0]); 			// Creating pure JSON from SIM800 response. sc: output status , nc:RSSI value , ebc: external bottons status
-																																																													// ContentStr is the JSON contain RSSI value , OUTPUT Status and external Buttons Status that  post in server
-										
+																																																													// ContentStr is the JSON contain RSSI value , OUTPUT Status and external Buttons Status that  post in server								
 	//sending status to server:
 	 sim80x_HTTP_Post(str,IP,"panel/api/d/1/2/eo5/",sendStatus);
 	 DEBUG( "***\r\n");
@@ -300,5 +308,5 @@ void sim80x_Send_Status(char*IP){
 	 DEBUG(sendStatus);
 	 DEBUG( "***\r\n");	
 		
-		}	
+		
 }
