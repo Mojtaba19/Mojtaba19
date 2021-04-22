@@ -169,7 +169,7 @@ uint8_t									getProcessProgramsStarting=0;		//1 if we start to get procees pr
 uint8_t									getProgramsStarting=0;					//1 if we start to get  programs used in showing on oled 0 if get programs to be ended. 
 uint32_t								lastTimeStamp;									//used when read last current time  stamp from eeprom
 uint32_t								lastEventTimeStamp;							//used when read last event time  stamp from eeprom
-uint8_t									simCardGprsOk=0;
+uint8_t									simCardGprsOk=0;								//simcard gprs is ok. changed in sim80x_HTTP_Start() and used in rssi antenna 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -505,7 +505,7 @@ int main(void)
 			 	 rssiIntValue=0;
 				 DEBUG( "***\r\n");
 			}
-		}
+	}
 	else
 	{
 				 DEBUG( "***\r\n");
