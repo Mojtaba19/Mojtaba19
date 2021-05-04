@@ -268,7 +268,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 	TH = malloc(2*sizeof(float));
 	DWT_Init();
-	//ssd1306_Init();
+	ssd1306_Init();
 	
 	//	HAL_RTCEx_BKUPWrite(&hrtc,1,8260);
 	//	HAL_RTCEx_BKUPWrite(&hrtc,2,8500);
@@ -356,7 +356,7 @@ int main(void)
 	DEBUG("\n\r    --DONE--\n\r");
 	//*/
 	
-	/*
+	//*
 	DEBUG("\n\rAPPLYING LAST OUTPUT STATUS...");
 		HAL_Delay(500);
 		processFlag=HAL_RTCEx_BKUPRead(&hrtc, LAST_PROCESS_FLAG_STATUS);
@@ -366,7 +366,7 @@ int main(void)
 	DEBUG("\n\r    --DONE--\n\r");	
 	//*/
 	
-	/*
+	//*
 	DEBUG("\n\rREADING FLOW1 AND FLOW2 FROM MEMORY...");
 		HAL_Delay(500);
 		Flow1=HAL_RTCEx_BKUPRead(&hrtc,1);	
@@ -374,7 +374,7 @@ int main(void)
 	DEBUG("\n\r    --DONE--\n\r");	
 	//*/
 	
-	/*
+	//*
 	DEBUG("\n\rGETTING DATE AND TIME...");
 		HAL_RTC_GetTime(&hrtc, &Time, RTC_FORMAT_BIN);
 		HAL_RTC_GetDate(&hrtc, &Date, RTC_FORMAT_BIN);
@@ -383,7 +383,7 @@ int main(void)
 	DEBUG("\n\r    --DONE--\n\r");
 	//*/	
 	
-	/*
+	//*
 	DEBUG("\n\rACTIVATING SIM808 MODULE...\n\r");
 		HAL_Delay(500);
 		if(!ACKHandler()){
@@ -393,7 +393,7 @@ int main(void)
 	DEBUG("\n\r    --DONE--\n\r");	
 	//*/
 	
-	/*
+	//*
 	DEBUG("\n\rSTARTING HTTP...\n\r");	
 		sim80x_HTTP_Start();
 	DEBUG("\n\r    --DONE--\n\r");	
@@ -418,7 +418,7 @@ int main(void)
 	DEBUG("\n\r    --DONE--\n\r");	
 
 */
-	/*
+	//*
 	DEBUG("\n\rSMS SETTING...\n\r");
 		SMSSetting();
 	DEBUG("\n\r    --DONE--\n\r");	
@@ -428,12 +428,12 @@ int main(void)
 	
 	//*/
 	
-	/*
+	//*
 	DEBUG("\n\rSENDING SMS...\n\r");
 		HAL_Delay(500);
 		sim80x_SendSMS(phone,__WELCOME_TEXT,6000);
 	DEBUG("\n\r    --DONE--\n\r");	
-	*/
+	//*/
 	
 	/*	
 	DEBUG("\n\rGETTING ALL PROGRAMS FROM SERVER...\n\r");
@@ -454,8 +454,8 @@ int main(void)
 		AlarmIsSet = 0;
 	DEBUG("\n\r    --DONE--\n\r");	
 	//*/
-/*	
-	
+
+	/*	
 	DEBUG("\n\rGETTING ALL PROCESS PROGRAMS FROM SERVER...\n\r");
 		HAL_Delay(500);
 		if(isConnect==1)
@@ -468,7 +468,6 @@ int main(void)
 	DEBUG("\n\r    --DONE--\n\r");	
 	//*/
 	
-	//*
 	/*
 	DEBUG("\n\rSETTING NEXT PROCESS PROGRAM ALARM...");
 		HAL_Delay(500);
@@ -507,7 +506,7 @@ int main(void)
 	DEBUG("\n\r    --DONE--\n\r");
 	//*/
 	
-	/*
+	//*
 	DEBUG("\n\rGETTING RSSI ANTENNA ...\n\r");
 	if(simCardGprsOk==1)
 	{
@@ -543,9 +542,9 @@ int main(void)
 		sim80x_HTTP_Stop();
 	DEBUG("\n\r    --DONE--\n\r");	
 	//*/
-	//HAL_Delay(6000);
-	//initializingFlag=0; //initializing seting done
-		
+	
+	HAL_Delay(6000);
+	initializingFlag=0; //initializing seting done	
 	DEBUG("\n\r  <<< INITIALIZING DONE >>>\n\r");
 	HAL_Delay(1000);
 	
@@ -556,7 +555,7 @@ int main(void)
   while (1)
   {
 		// Checking for sim800 errors:
-		//SIM800_handler();
+		SIM800_handler();
 		
 		// Sending SMS in case of output changes
 		if(SMSisPending==1){
