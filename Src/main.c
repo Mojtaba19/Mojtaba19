@@ -39,6 +39,7 @@
 #include "SIM8xx.h"
 #include "ssd1306.h"
 #include "ssd1306_fonts.h"
+#include "current.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -79,6 +80,7 @@ ProcessProgram;
 #define		__IS_3G_MODULE__					0																						// If you use 3G module this value should be 1.
 #define  	__SERIAL_NUMBER						"666"																				// Unique serial number. We use this number to get "land ID" from server.
 #define		__WELCOME_TEXT						"TEST BENCH STARTED"												// The text sent via SMS after reset.
+#define		__ON_OFF_CURRENT_THRESH__	1000																				// If the load current (mA) exceeded this limit, it means the load in ON 		
 
 #define		PROGRAM_ID_ADDRESS				 19																					// The address of RTC backup register storing the next program ID.
 #define		LAST_STATUS_ADDRESS			   10																					// The address of RTC backup register storing the last output status.
@@ -170,13 +172,19 @@ uint8_t									getProgramsStarting=0;					//1 if we start to get  programs used
 uint32_t								lastTimeStamp;									//used when read last current time  stamp from eeprom
 uint32_t								lastEventTimeStamp;							//used when read last event time  stamp from eeprom
 uint8_t									simCardGprsOk=0;								//simcard gprs is ok. changed in sim80x_HTTP_Start() and used in rssi antenna 
+
+uint8_t									isAbGiriInProgress = 1;					// Represent whether we want to do Abgiri or not.
+uint8_t									isTimeForCurrentCheck = 1;			// Represent whether we check the load current or not.
+uint8_t									Load_Status = 0;								// If load (e.g. pomp) is powered, this variable will be 1, otherwise 0.
+uint8_t									Load_NumberOfTries = 0;					// Number of attemots to turning the load on.
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_NVIC_Init(void);
 /* USER CODE BEGIN PFP */
-//void						Hal_Delay(uint32_t interval);
+void							my_delay(uint32_t interval);
 uint16_t					GetID(void);
 uint8_t						GetOutput(void);
 void							measureAndLog(void);
@@ -205,6 +213,8 @@ void							PrintAllPrograms(void);
 uint8_t						JSON2Str(char* result, char* raw_input, char* key);
 uint8_t						JSON2int(char* result, char* raw_input, char* key);
 uint8_t						JSON2Str_nested(char* result, char* raw_input, char* key_parent, char* key_child);
+void							current_sensor_CallBack(uint16_t current_ma, uint32_t raw);
+void 							AbGiriProccess(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -245,17 +255,20 @@ int main(void)
   MX_UART4_Init();
   MX_USART1_UART_Init();
   MX_SPI2_Init();
-  MX_TIM2_Init();
-	MX_TIM5_Init();
-  MX_I2C2_Init();
   MX_I2C1_Init();
+  MX_TIM2_Init();
+  MX_I2C2_Init();
+  MX_TIM5_Init();
+  MX_ADC2_Init();
+  MX_TIM3_Init();
+  MX_TIM8_Init();
 
   /* Initialize interrupts */
   MX_NVIC_Init();
   /* USER CODE BEGIN 2 */
 	TH = malloc(2*sizeof(float));
 	DWT_Init();
-	ssd1306_Init();
+	//ssd1306_Init();
 	
 	//	HAL_RTCEx_BKUPWrite(&hrtc,1,8260);
 	//	HAL_RTCEx_BKUPWrite(&hrtc,2,8500);
@@ -273,10 +286,13 @@ int main(void)
 	DEBUG("\n\r*                                              *");
 	DEBUG("\n\r************************************************\n\r");
 	
+	//*
 	initializingFlag=1; //initializing seting is starting
 	DEBUG("\n\r Tim start IT... \n\r");
 		HAL_TIM_Base_Start_IT(&htim5);
+		HAL_TIM_Base_Start_IT(&htim8);
 	DEBUG("\n\r    --DONE--\n\r");
+	//*/
 	
 #if(__FIRSTTIME_PROGRAMMING__==1)		
 	//*
@@ -334,7 +350,13 @@ int main(void)
 	
 #endif
 
+	//*
+	DEBUG("\n\rStarting current sensor...");
+		current_start(current_sensor_CallBack, &htim3, &hadc2);
+	DEBUG("\n\r    --DONE--\n\r");
+	//*/
 	
+	/*
 	DEBUG("\n\rAPPLYING LAST OUTPUT STATUS...");
 		HAL_Delay(500);
 		processFlag=HAL_RTCEx_BKUPRead(&hrtc, LAST_PROCESS_FLAG_STATUS);
@@ -342,6 +364,8 @@ int main(void)
 		//LastStatus=32;
 		ApplyAction(LastStatus);
 	DEBUG("\n\r    --DONE--\n\r");	
+	//*/
+	
 	/*
 	DEBUG("\n\rREADING FLOW1 AND FLOW2 FROM MEMORY...");
 		HAL_Delay(500);
@@ -350,8 +374,7 @@ int main(void)
 	DEBUG("\n\r    --DONE--\n\r");	
 	//*/
 	
-	//*
-
+	/*
 	DEBUG("\n\rGETTING DATE AND TIME...");
 		HAL_RTC_GetTime(&hrtc, &Time, RTC_FORMAT_BIN);
 		HAL_RTC_GetDate(&hrtc, &Date, RTC_FORMAT_BIN);
@@ -360,7 +383,7 @@ int main(void)
 	DEBUG("\n\r    --DONE--\n\r");
 	//*/	
 	
-	//*
+	/*
 	DEBUG("\n\rACTIVATING SIM808 MODULE...\n\r");
 		HAL_Delay(500);
 		if(!ACKHandler()){
@@ -370,7 +393,7 @@ int main(void)
 	DEBUG("\n\r    --DONE--\n\r");	
 	//*/
 	
-	//*
+	/*
 	DEBUG("\n\rSTARTING HTTP...\n\r");	
 		sim80x_HTTP_Start();
 	DEBUG("\n\r    --DONE--\n\r");	
@@ -395,7 +418,7 @@ int main(void)
 	DEBUG("\n\r    --DONE--\n\r");	
 
 */
-	//*
+	/*
 	DEBUG("\n\rSMS SETTING...\n\r");
 		SMSSetting();
 	DEBUG("\n\r    --DONE--\n\r");	
@@ -484,7 +507,7 @@ int main(void)
 	DEBUG("\n\r    --DONE--\n\r");
 	//*/
 	
-	//*
+	/*
 	DEBUG("\n\rGETTING RSSI ANTENNA ...\n\r");
 	if(simCardGprsOk==1)
 	{
@@ -520,12 +543,12 @@ int main(void)
 		sim80x_HTTP_Stop();
 	DEBUG("\n\r    --DONE--\n\r");	
 	//*/
-	HAL_Delay(6000);
-	initializingFlag=0; //initializing seting done
+	//HAL_Delay(6000);
+	//initializingFlag=0; //initializing seting done
 		
 	DEBUG("\n\r  <<< INITIALIZING DONE >>>\n\r");
 	HAL_Delay(1000);
-		
+	
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -533,7 +556,7 @@ int main(void)
   while (1)
   {
 		// Checking for sim800 errors:
-		SIM800_handler();
+		//SIM800_handler();
 		
 		// Sending SMS in case of output changes
 		if(SMSisPending==1){
@@ -562,33 +585,36 @@ int main(void)
 		//DEBUG(buttonsStatus[0]);
 		// This section runs each 5 minutes
 	
-	if(action){
-		 uint32_t 							currentTimeStamp = 0;		//used when convert current time to time stamp
-		 struct tm  						currentTime;
-		 currentTime.tm_year	= Date.Year + 2000  - 1900;
-		 currentTime.tm_mon		= Date.Month;
-		 currentTime.tm_mday	= Date.Date;
-		 currentTime.tm_hour	= Time.Hours;
-		 currentTime.tm_min		= Time.Minutes;
-		 currentTime.tm_sec		= Time.Seconds;
-		 currentTime.tm_isdst	= -1;	
-		 currentTimeStamp = mktime(&currentTime);//convert current time to time stamp
-	 	 HAL_RTCEx_BKUPWrite(&hrtc, LAST_CURRENT_TIME_STAMP, currentTimeStamp);//stor time stamp into eeprom
-			
-		 sim80x_HTTP_Start();
-//		GetAllPrograms();
-//		HAL_Delay(5000);
-		GetAllProcessPrograms();
-		get_output_result = GetOutput();
-			/*
-				get_output_result has 5 values:
-					-- 0: Means the connection is lost
-					-- 1: Means connection is stable and there is no change in programs and outputs 
-					-- 2: Means connection is stable and programs are changed
-					-- 3: Means connection is stable and outputs have to be changed
-					-- 4: Means connection is stable and both of programs and outputs have to be changed
-			*/
-		if(processFlag==0){		
+		// Abgiri execution:
+		AbGiriProccess();
+				
+		if(action){
+			 uint32_t 							currentTimeStamp = 0;		//used when convert current time to time stamp
+			 struct tm  						currentTime;
+			 currentTime.tm_year	= Date.Year + 2000  - 1900;
+			 currentTime.tm_mon		= Date.Month;
+			 currentTime.tm_mday	= Date.Date;
+			 currentTime.tm_hour	= Time.Hours;
+			 currentTime.tm_min		= Time.Minutes;
+			 currentTime.tm_sec		= Time.Seconds;
+			 currentTime.tm_isdst	= -1;	
+			 currentTimeStamp = mktime(&currentTime);//convert current time to time stamp
+			 HAL_RTCEx_BKUPWrite(&hrtc, LAST_CURRENT_TIME_STAMP, currentTimeStamp);//stor time stamp into eeprom
+				
+			 sim80x_HTTP_Start();
+	//		GetAllPrograms();
+	//		HAL_Delay(5000);
+			GetAllProcessPrograms();
+			get_output_result = GetOutput();
+				/*
+					get_output_result has 5 values:
+						-- 0: Means the connection is lost
+						-- 1: Means connection is stable and there is no change in programs and outputs 
+						-- 2: Means connection is stable and programs are changed
+						-- 3: Means connection is stable and outputs have to be changed
+						-- 4: Means connection is stable and both of programs and outputs have to be changed
+				*/
+			if(processFlag==0){		
 				switch (get_output_result)
 				{
 					case 0:
@@ -648,7 +674,7 @@ int main(void)
 			if(Sim80x_StatusTypeDef!=HAL_OK)//if sim800 response is not OK to rssi at_command  
 			{				
 				 DEBUG( "***\r\n");
-			 	 rssiIntValue=0;
+				 rssiIntValue=0;
 				 DEBUG("RSSI: Can not read RSSI from sim80x\r\n");
 				 DEBUG( "***\r\n");
 			}
@@ -686,13 +712,12 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSE;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE|RCC_OSCILLATORTYPE_LSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.LSEState = RCC_LSE_ON;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = 8;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+  RCC_OscInitStruct.PLL.PLLM = 4;
   RCC_OscInitStruct.PLL.PLLN = 180;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 4;
@@ -765,7 +790,7 @@ static void MX_NVIC_Init(void)
   *                the configuration information for RTC.
   */
 void HAL_RTCEx_WakeUpTimerEventCallback(RTC_HandleTypeDef *hrtc){
-  action=1;
+  action=1;	
 }
 
 /**
@@ -2033,8 +2058,8 @@ void PrintAllProcessProgram(int i){
 
 	DEBUG("\n\r**************\n\r");
 }
-/*
-void Hal_Delay(uint32_t interval){
+//*
+void my_delay(uint32_t interval){
 	uint16_t times=0;
 	uint16_t residue=0;
 	
@@ -2053,8 +2078,7 @@ void Hal_Delay(uint32_t interval){
 		HAL_TIM_Base_Stop(&htim2);
 	}
 }
-*/
-
+//*/
 uint8_t JSON2Str(char* result, char* raw_input, char* key){
 	char value_str[60];
 	cJSON *server_response = cJSON_Parse(raw_input);		
@@ -2107,8 +2131,64 @@ uint8_t JSON2int(char* result, char* raw_input, char* key){
 	cJSON_Delete(server_response);
 	return 0;
 }
+/**
+  * @brief  Regular conversion complete callback
+  * @param  current_ma is the estimated current value in mA unit.
+  *         raw is the raw value of currnet between 0 to 4095. This value used in calibration process.
+  * @retval None
+  */
+void current_sensor_CallBack(uint16_t current_ma, uint32_t raw){
+	char dbg_string[70];
+	Load_Status = (current_ma >= __ON_OFF_CURRENT_THRESH__);
+	snprintf(dbg_string, 70, "\n\rCurrent = %d \tRaw = %d \tState = %s \tNumber of tries = %d", current_ma, raw, Load_Status ? "ON" : "OFF", Load_NumberOfTries);
+	DEBUG(dbg_string);
+}
 
-/* USER CODE END 4 */
+void AbGiriProccess(void){
+	// Is it Abgiri time?
+	if(isTimeForCurrentCheck && isAbGiriInProgress){
+		
+		// OK, turn the pomp on:
+		HAL_GPIO_WritePin(relay2_GPIO_Port, relay2_Pin, GPIO_PIN_SET);
+		
+		// Wait 4 seconds please...
+		HAL_Delay(4000);
+		
+		// Was the pomp really turned on?
+		if(Load_Status==0){
+			DEBUG("\n\r   I CHECKED THE POMP, THAT WAS OFF I THINK.");
+			DEBUG("\n\r   I AM GOING TO RESET IT...");
+			
+			// Oh no pomp is off! Please turn it on again:
+			HAL_GPIO_WritePin(relay2_GPIO_Port, relay2_Pin, GPIO_PIN_RESET);
+			HAL_Delay(5000);
+			HAL_GPIO_WritePin(relay2_GPIO_Port, relay2_Pin, GPIO_PIN_SET);
+			
+			DEBUG("\n\r   I RESET THE POMP.");
+			
+			// Increament number of tries please.
+			// Did we exceed the maximum allowed tries?
+			if(Load_NumberOfTries++ >= 10){
+				DEBUG("\n\r --MAXIMUM TRIES EXCEEDED. I IGNORED THE ABGIRI--");
+				
+				// Ah shit we tried to turn the pomp on 10 times! So ignore the Abgiri:
+				HAL_GPIO_WritePin(relay2_GPIO_Port, relay2_Pin, GPIO_PIN_RESET);
+				isAbGiriInProgress = 0;
+				
+				/*
+					Add some codes here if you want to show in debug what happened.
+				*/
+				
+			}
+		}
+		else{
+			DEBUG("\n\r   I CHECKED THE POMP, THAT WAS -ON- I THINK.");
+		}
+	}
+	
+	// Take down the current feedback flag:
+	isTimeForCurrentCheck = 0;
+}
 
  /**
   * @brief  Period elapsed callback in non blocking mode
@@ -2120,7 +2200,10 @@ uint8_t JSON2int(char* result, char* raw_input, char* key){
   */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-  /* USER CODE BEGIN Callback 0 */
+	if(htim->Instance==TIM8)
+	{
+		isTimeForCurrentCheck = 1;
+	}
 	if(htim->Instance==TIM5)
 	{
 		
@@ -2490,14 +2573,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	
 		
 	}
-  /* USER CODE END Callback 0 */
-  if (htim->Instance == TIM1) {
-    HAL_IncTick();
-  }
-  /* USER CODE BEGIN Callback 1 */
-
-  /* USER CODE END Callback 1 */
 }
+
+/* USER CODE END 4 */
 
 /**
   * @brief  This function is executed in case of error occurrence.
@@ -2510,7 +2588,6 @@ void Error_Handler(void)
 	DEBUG("\n\rERROR HANDLER\n\r");
   /* USER CODE END Error_Handler_Debug */
 }
-
 
 #ifdef  USE_FULL_ASSERT
 /**
