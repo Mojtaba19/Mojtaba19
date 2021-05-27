@@ -1,5 +1,7 @@
 #include "SIM8xx.h"
 
+extern TIM_HandleTypeDef htim5;
+
 void sim80x_PWR(uint8_t state){
 	if(state == ON)
 	{
@@ -243,6 +245,111 @@ uint8_t ACKHandler(void){
 	}
 	return 0;
 }
+/**
+  * @brief  received unread sms
+  */
+void sim80x_Receive_sms(void){
+	char*		startAnswer;
+	char*		endAnswer;
+ 
+	HAL_TIM_Base_Stop_IT(&htim5);//stop timer interrupt before writeProcessProg in eeprom
+
+	DEBUG("\n\r Checking SMS...\n\r");
+	sim80x_ATC("AT+CMGL\r\n",1000);
+	if( strstr((char *)RxBuffer,"REC UNREAD") != NULL)//if we have new message
+	{
+		DEBUG("\n\r Having new message...");
+	  ParsingSMSText(RxBuffer);//parsing received sms text
+		DEBUG("\n\r");
+		DEBUG(smsText);
+		DEBUG("\n\r");
+
+		//Separate phone number from sim800 response : 
+
+		startAnswer	= strstr(RxBuffer, "+98")+3;
+		endAnswer		= startAnswer+10;
+		memset(phoneNumber, NULL, 10);
+		for(int i=(startAnswer-RxBuffer); i<(endAnswer-RxBuffer); i++)
+			phoneNumber[i-(startAnswer-RxBuffer)] = RxBuffer[i];
+		DEBUG("\n\r");
+		DEBUG(phoneNumber);
+		DEBUG("\n\r");
+
+		if(CheckingPhonenumber(phoneNumber)==1)//Check if the phone number is registered or not 
+		{
+			DEBUG("\n\r valid Phone number\n\r");
+
+			if(strstr((char *)RxBuffer,"set")||strstr((char *)RxBuffer,"Set"))
+			{
+				if(strstr((char *)RxBuffer,"sms level 0"))
+				{
+					DeletePhonenumber(phoneNumber);
+					sim80x_SendSMS(phoneNumber,"\n\rSystem response:\n\r SMS Level : 0\n\r Phone Number Deleted",1000);
+				}
+					
+				else if(strstr((char *)RxBuffer,"sms level 1"))
+					{
+						ChangePhonenumberSMSlevel(phoneNumber,1);
+						sim80x_SendSMS(phoneNumber,"\n\rSystem response:\n\r SMS Level : 1",1000);
+					}
+				else if(strstr((char *)RxBuffer,"sms level 2"))
+					{
+						ChangePhonenumberSMSlevel(phoneNumber,2);
+						sim80x_SendSMS(phoneNumber,"\n\rSystem response:\n\r SMS Level : 2",1000);
+					}
+				else if(strstr((char *)RxBuffer,"phone number"))
+				{
+					DEBUG("\n\r This phone number is already registered");
+					sim80x_SendSMS(phoneNumber,"\n\rSystem response:\n\r Your phone number is already registered",1000);
+				}
+				
+				else
+					sim80x_SendSMS(phoneNumber,"\n\rSystem response:\n\r Unvalid SMS Text",1000);
+					
+				}
+			else
+				sim80x_SendSMS(phoneNumber,"\n\rSystem response:\n\r Unvalid SMS Text",1000);
+
+			
+		}
+		else 
+		{
+			DEBUG("\n\r Phone number is not registered");
+			if(strstr((char *)RxBuffer,"set")||strstr((char *)RxBuffer,"Set"))
+			{
+			 if(strstr((char *)RxBuffer,"phone number"))
+				{
+					RegisteringPhonenumber(phoneNumber);
+					sim80x_SendSMS(phoneNumber,"\n\rSystem response:\n\r Your phone number is registered",1000);
+				}
+			else
+				sim80x_SendSMS(phoneNumber,"\n\rSystem response:\n\r Unvalid SMS Text",1000);
+			}
+			else
+				sim80x_SendSMS(phoneNumber,"\n\rSystem response:\n\r Unvalid Phone Number",1000);
+			
+			
+			
+		}
+		
+		
+	//DeletePhonenumber(str);	
+//		RegisteringPhonenumber((char *)str);
+//		if(CheckingPhonenumber((char *)str)==1)
+//			DEBUG("\n\r valid Phone number");
+//		else
+//			DEBUG("\n\r Phone number is not registered");
+		
+	}
+	else
+	 DEBUG("\n\r No message");
+	DEBUG("\n\r    --DONE--\n\r");
+	
+	HAL_Delay(1000);
+	HAL_TIM_Base_Start_IT(&htim5);//stop timer interrupt before writeProcessProg in eeprom
+
+	
+}
 
 
 /**
@@ -262,6 +369,7 @@ void sim80x_Send_Status(char*IP){
 	char *startAnswer; 
 	char *endAnswer;
 	char sendStatus[100];// a JSON including output status RSSI value and external bottons status that post to server
+	HAL_TIM_Base_Stop_IT(&htim5);
 	memset(sendStatus,NULL,100);
 	memset(str,NULL,30);
 	memset(rssiStrValue,NULL,5);
@@ -307,6 +415,7 @@ void sim80x_Send_Status(char*IP){
 	 DEBUG("outputs_rssi_buttonsStatus: ");
 	 DEBUG(sendStatus);
 	 DEBUG( "***\r\n");	
+		HAL_TIM_Base_Start_IT(&htim5);
 		
 		
 }

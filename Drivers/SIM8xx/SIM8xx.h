@@ -60,6 +60,9 @@ extern char								str[size],ContentStr[size];
 extern char								RxBuffer[size];
 extern char 							outputsStatus[size];
 extern char 							rssiStrValue[5];
+extern char 	 						smsText[size];
+extern char*							registerPassword;
+extern char								phoneNumber[10];
 extern uint8_t						ErrorCounter;
 extern uint8_t						action;
 extern uint8_t		        buttonsStatus[2];			//status of the 2 external buttons 
@@ -76,5 +79,13 @@ void							sim80x_PWR(uint8_t state);
 void 							SIM800_handler(void);
 uint8_t						ACKHandler(void);
 void							SMSSetting(void);
+void 							sim80x_Receive_sms(void);
 void           		sim80x_Send_Status(char* IP);
+uint8_t 					CheckingPhonenumber(char * phone_number );
+void 							RegisteringPhonenumber(char * phone_number);
+void 						  ParsingSMSText(char * RxBuffer);
+void 						  DeletePhonenumber(char * phone_number );
+void 							PrintAllphonenumbers(void);
+uint8_t 					ReadPhonenumberSMSlevel(char * phone_number);
+void 							ChangePhonenumberSMSlevel(char * phone_number,uint8_t smsLevel);
 #endif 
