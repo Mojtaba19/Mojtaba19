@@ -80,6 +80,7 @@ ProcessProgram;
 #define  	__SERIAL_NUMBER						"666"																				// Unique serial number. We use this number to get "land ID" from server.
 #define		__WELCOME_TEXT						"TEST BENCH STARTED"												// The text sent via SMS after reset.
 
+#define		LAST_SYSTEM_RESET_STATUS	  9
 #define		PROGRAM_ID_ADDRESS				 19																					// The address of RTC backup register storing the next program ID.
 #define		LAST_STATUS_ADDRESS			   10																					// The address of RTC backup register storing the last output status.
 #define		MY_ID_ADDRESS							 18																					// The address of RTC backup register storing the "Land ID".
@@ -255,7 +256,13 @@ int main(void)
   /* USER CODE BEGIN 2 */
 	TH = malloc(2*sizeof(float));
 	DWT_Init();
-	ssd1306_Init();
+		if(HAL_RTCEx_BKUPRead(&hrtc,LAST_SYSTEM_RESET_STATUS)==1)//reset system one time before starting
+{
+	HAL_RTCEx_BKUPWrite(&hrtc, LAST_SYSTEM_RESET_STATUS, 2);
+	NVIC_SystemReset();
+	
+}
+	HAL_RTCEx_BKUPWrite(&hrtc, LAST_SYSTEM_RESET_STATUS, 1);
 	
 	//	HAL_RTCEx_BKUPWrite(&hrtc,1,8260);
 	//	HAL_RTCEx_BKUPWrite(&hrtc,2,8500);
@@ -275,6 +282,9 @@ int main(void)
 	
 	initializingFlag=1; //initializing seting is starting
 	DEBUG("\n\r Tim start IT... \n\r");
+		HAL_Delay(250);
+		ssd1306_Init();
+		HAL_Delay(250);
 		HAL_TIM_Base_Start_IT(&htim5);
 	DEBUG("\n\r    --DONE--\n\r");
 	
@@ -2290,7 +2300,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 					 }
 		  break;
 			case 3:
-			 //show last outouts status:
+			 //show last outputs status:
 		
 					if(HAL_GPIO_ReadPin(relay1_GPIO_Port, relay1_Pin))
 						ssd1306_draw_bitmap(60, 34, tapOn , 20, 30);//tapOn--> relay 1
