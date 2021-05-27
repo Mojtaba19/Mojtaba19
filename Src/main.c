@@ -422,6 +422,11 @@ int main(void)
 
 */
 	//*
+	DEBUG("\n\rRegisterd Phone Numbers List :\n\r");
+		PrintAllphonenumbers();
+	DEBUG("\n\r    --DONE--\n\r");
+		//*/
+	//*
 	DEBUG("\n\rSMS SETTING...\n\r");
 		SMSSetting();
 	DEBUG("\n\r    --DONE--\n\r");
@@ -692,7 +697,6 @@ int main(void)
 			 }
 		  
 			sim80x_Send_Status(SERVER_IP); //ContentStr is the JSON contain RSSI value , OUTPUT Status and external Buttons Status that  post in server
-			sim80x_Receive_sms();
 			rssiIntValue= (uint8_t)atoi(rssiStrValue);//convert rssiStrValue to int
 			if(Sim80x_StatusTypeDef!=HAL_OK)//if sim800 response is not OK to rssi at_command  
 			{				
@@ -701,6 +705,7 @@ int main(void)
 				 DEBUG("RSSI: Can not read RSSI from sim80x\r\n");
 				 DEBUG( "***\r\n");
 			}
+			sim80x_Receive_sms();
 
 			#if(__SENSORS_ARE_ENABLE__==1)
 				if(isConnect==1)
@@ -2260,8 +2265,7 @@ void RegisteringPhonenumber(char * phone_number)
 {
 		if(ee24_isConnected(&hi2c1))
 		{
-			uint8_t tempData[1];
-			tempData[0]='1';
+			uint8_t tempData[1]={1};
 			numberOfRegisteredPhoneNumbers=HAL_RTCEx_BKUPRead(&hrtc, NUMBER_OF_REGISTERD_PHONE_NUMBERS);
 			if(numberOfRegisteredPhoneNumbers!=9)
 			{
@@ -2289,7 +2293,7 @@ void PrintAllphonenumbers(void){
 		
 		if(ee24_isConnected(&hi2c1))
 			{
-				uint8_t tempData[10];
+				uint8_t tempData[11];
 				numberOfRegisteredPhoneNumbers=HAL_RTCEx_BKUPRead(&hrtc, NUMBER_OF_REGISTERD_PHONE_NUMBERS);
 				for(int i=0;i<numberOfRegisteredPhoneNumbers;i++)
 				{
@@ -2297,10 +2301,10 @@ void PrintAllphonenumbers(void){
 				  memset(ContentStr, NULL, size);
 				  sprintf(ContentStr, "\n\r %d ) %s ",i+1,tempData);
 				  DEBUG(ContentStr);
-					memset(tempData,NULL, 10);
+					memset(tempData,0, 10);
 					memset(ContentStr, NULL, size);
-					ee24_read(&hi2c1, 2000+20*i+10, tempData,10, 2000);
-				  sprintf(ContentStr, "   SMS Level: %d ",tempData[0]);
+					ee24_read(&hi2c1, 2000+20*i, tempData,11, 2000);
+				  sprintf(ContentStr, "   SMS Level: %d ",tempData[10]);
 				  DEBUG(ContentStr);
 				}
 		}	
@@ -2320,7 +2324,7 @@ uint8_t ReadPhonenumberSMSlevel(char * phone_number){
 			if( strstr((char *)tempData,phone_number)!=NULL)
 			{
 				memset(ContentStr, NULL, size);
-				sprintf(ContentStr, "\n\r %d ) %s   SMS Level :%d  ",i+1,phone_number,tempData[10]);
+				sprintf(ContentStr, "\n\r%d ) %s   SMS Level :%d  ",i+1,phone_number,(uint8_t)tempData[10]);
 				DEBUG(ContentStr);
 				return tempData[10];
 			}		
@@ -2342,7 +2346,7 @@ void ChangePhonenumberSMSlevel(char * phone_number,uint8_t smsLevel){
 				tempData[0]=smsLevel;
 				ee24_write(&hi2c1, 2000+20*i+10, tempData, 1, 1000);
 				memset(ContentStr, NULL, size);
-				sprintf(ContentStr, "\n\r SMS Level Change \n\r  %d ) %s SMS Level Changed to %d  ",i+1,phone_number,tempData[0]);
+				sprintf(ContentStr, "\n\r SMS Level Change \n\r%d ) %s SMS Level Changed to %d  ",i+1,phone_number,tempData[0]);
 				DEBUG(ContentStr);
 			}		
 		}			

@@ -279,54 +279,59 @@ void sim80x_Receive_sms(void){
 		{
 			DEBUG("\n\r valid Phone number\n\r");
 
-			if(strstr((char *)RxBuffer,"set")||strstr((char *)RxBuffer,"Set"))
+			if(strstr((char *)smsText,"set")||strstr((char *)smsText,"Set"))
 			{
-				if(strstr((char *)RxBuffer,"sms level 0"))
+				if(strstr((char *)smsText,"sms level 0"))
 				{
 					DeletePhonenumber(phoneNumber);
-					sim80x_SendSMS(phoneNumber,"\n\rSystem response:\n\r SMS Level : 0\n\r Phone Number Deleted",1000);
+					sim80x_SendSMS(phoneNumber,"System response:\n\r SMS Level : 0\n\r Phone Number Deleted",1000);
 				}
 					
-				else if(strstr((char *)RxBuffer,"sms level 1"))
+				else if(strstr((char *)smsText,"sms level 1"))
 					{
 						ChangePhonenumberSMSlevel(phoneNumber,1);
-						sim80x_SendSMS(phoneNumber,"\n\rSystem response:\n\r SMS Level : 1",1000);
+						sim80x_SendSMS(phoneNumber,"System response:\n\r SMS Level : 1",1000);
+
+
 					}
-				else if(strstr((char *)RxBuffer,"sms level 2"))
+				else if(strstr((char *)smsText,"sms level 2"))
 					{
 						ChangePhonenumberSMSlevel(phoneNumber,2);
-						sim80x_SendSMS(phoneNumber,"\n\rSystem response:\n\r SMS Level : 2",1000);
+						sim80x_SendSMS(phoneNumber,"System response:\n\r SMS Level : 2",1000);
+
+
 					}
-				else if(strstr((char *)RxBuffer,"phone number"))
+				else if(strstr((char *)smsText,"phone number"))
 				{
 					DEBUG("\n\r This phone number is already registered");
-					sim80x_SendSMS(phoneNumber,"\n\rSystem response:\n\r Your phone number is already registered",1000);
+					sim80x_SendSMS(phoneNumber,"System response:\n\r This phone number is already registered",1000);
 				}
 				
 				else
-					sim80x_SendSMS(phoneNumber,"\n\rSystem response:\n\r Unvalid SMS Text",1000);
+					sim80x_SendSMS(phoneNumber,"System response:\n\rUnvalid request",1000);
 					
 				}
 			else
-				sim80x_SendSMS(phoneNumber,"\n\rSystem response:\n\r Unvalid SMS Text",1000);
+				sim80x_SendSMS(phoneNumber,"System response:\n\rUnvalid request",1000);
 
 			
 		}
 		else 
 		{
 			DEBUG("\n\r Phone number is not registered");
-			if(strstr((char *)RxBuffer,"set")||strstr((char *)RxBuffer,"Set"))
+			if(strstr((char *)smsText,"set")||strstr((char *)smsText,"Set"))
 			{
-			 if(strstr((char *)RxBuffer,"phone number"))
+			 if(strstr((char *)smsText,"phone number"))
 				{
 					RegisteringPhonenumber(phoneNumber);
-					sim80x_SendSMS(phoneNumber,"\n\rSystem response:\n\r Your phone number is registered",1000);
+					sim80x_SendSMS(phoneNumber,"System response:\n\rNew Phone Number Registered",1000);
+
 				}
 			else
-				sim80x_SendSMS(phoneNumber,"\n\rSystem response:\n\r Unvalid SMS Text",1000);
+				sim80x_SendSMS(phoneNumber,"System response:\n\rUnvalid Phone Number",1000);
 			}
 			else
-				sim80x_SendSMS(phoneNumber,"\n\rSystem response:\n\r Unvalid Phone Number",1000);
+				sim80x_SendSMS(phoneNumber,"\n\rSystem response:\n\rUnvalid Phone Number",1000);
 			
 			
 			
@@ -345,7 +350,7 @@ void sim80x_Receive_sms(void){
 	 DEBUG("\n\r No message");
 	DEBUG("\n\r    --DONE--\n\r");
 	
-	HAL_Delay(1000);
+	HAL_Delay(2000);
 	HAL_TIM_Base_Start_IT(&htim5);//stop timer interrupt before writeProcessProg in eeprom
 
 	
