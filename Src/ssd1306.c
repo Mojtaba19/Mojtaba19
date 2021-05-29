@@ -68,7 +68,7 @@ void ssd1306_Init(void) {
 	ssd1306_Reset();
 
     // Wait for the screen to boot
-   // HAL_Delay(100);
+    HAL_Delay(100);
 //   		TIM2->CNT=0;
 //			HAL_TIM_Base_Start(&htim2);
 //			while(TIM2->CNT<100000);
