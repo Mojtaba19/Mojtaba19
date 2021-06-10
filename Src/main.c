@@ -215,6 +215,7 @@ uint8_t						JSON2Str_nested(char* result, char* raw_input, char* key_parent, ch
 void							current_sensor_CallBack(uint16_t current_ma, uint32_t raw);
 void 							AbGiriProccess(void);
 uint8_t 					CheckingPhonenumber(char * phone_number );
+void 							GET_SAVE_Time(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -314,7 +315,6 @@ int main(void)
 		HAL_Delay(500);
 		processFlag=HAL_RTCEx_BKUPRead(&hrtc, LAST_PROCESS_FLAG_STATUS);
 		LastStatus = (uint8_t)HAL_RTCEx_BKUPRead(&hrtc, LAST_STATUS_ADDRESS);	
-		//LastStatus=32;
 		ApplyAction(LastStatus);
 	DEBUG("\n\r    --DONE--\n\r");	
 	//*/
@@ -328,49 +328,38 @@ int main(void)
 	//*/
 	
 	//*
-	DEBUG("\n\rGETTING DATE AND TIME...");
-		HAL_RTC_GetTime(&hrtc, &Time, RTC_FORMAT_BIN);
-		HAL_RTC_GetDate(&hrtc, &Date, RTC_FORMAT_BIN);
-		snprintf(str,sizeof(str),"\n\r Time: %d/%02d/%02d %02d:%02d:%02d", 2000+Date.Year, Date.Month, Date.Date, Time.Hours, Time.Minutes, Time.Seconds);
-		DEBUG(str);
-	DEBUG("\n\r    --DONE--\n\r");
-	//*/	
-	
-	//*
 	DEBUG("\n\rACTIVATING SIM808 MODULE...\n\r");
 		HAL_Delay(500);
+		isConnect = 1;
 		if(!ACKHandler()){
 			isConnect = 0;
 			DEBUG("\n\r SIM800 is not responding. I'm Offline now.");
 		}
 	DEBUG("\n\r    --DONE--\n\r");	
 	//*/
-	
+		
 	//*
-	DEBUG("\n\rSTARTING HTTP...\n\r");	
-		sim80x_HTTP_Start();
-	DEBUG("\n\r    --DONE--\n\r");	
+	DEBUG("\n\rGETTING RSSI ANTENNA ...\n\r");
+		Sim80x_StatusTypeDef=sim80x_ATC("AT+CSQ\r\n",50);// SIM800 RSSI AT Command
+		if(Sim80x_StatusTypeDef==HAL_OK)
+			{
+			//parsing sim800 response:	
+			startAnswer	= strstr(RxBuffer, "+CSQ:")+5;
+			endAnswer		= strstr(RxBuffer, ",");
+			for(int i=(startAnswer-RxBuffer); i<(endAnswer-RxBuffer); i++)
+				rssiStrValue[i-(startAnswer-RxBuffer)] = RxBuffer[i];	//ContentStr=RSSI value of sim800
+			rssiIntValue= (uint8_t)atoi(rssiStrValue);
+			}
+			else
+			{				
+				 DEBUG( "***\r\n");
+				 DEBUG("RSSI: Can not read RSSI from sim80x\r\n");
+				 rssiIntValue=0;
+				 DEBUG( "***\r\n");
+			}
+	DEBUG("\n\r    --DONE--\n\r");
 	//*/
-		
-
-	DEBUG("\n\rGETTING ID BY SERIAL NUMBER...\n\r");
-		if(isConnect==1)
-			myID = GetID();
-		
-		if(myID==0)
-			myID = HAL_RTCEx_BKUPRead(&hrtc, MY_ID_ADDRESS);
-		else
-			HAL_RTCEx_BKUPWrite(&hrtc, MY_ID_ADDRESS, myID);
-		
-		if(myID==0)
-			isConnect=0;
-		
-		memset(str, NULL, size);
-		snprintf(str, size, "\n\rmyID is \"%d\"", myID);
-		DEBUG(str);
-		DEBUG("\n\r    --DONE--\n\r");	
-
-
+	
 	//*
 	DEBUG("\n\rSMS SETTING...\n\r");
 		SMSSetting();
@@ -379,7 +368,7 @@ int main(void)
 	
 	//* 
 	DEBUG("\n\rDeletting All Messages...\n\r");
-	sim80x_ATC("AT+CMGD=1,4\r\n",2000);	
+		sim80x_ATC("AT+CMGD=1,4\r\n",2000);	
 	DEBUG("\n\r    --DONE--\n\r");
 	//*/
 	
@@ -391,6 +380,28 @@ int main(void)
 	//*/
 	
 	
+	//*
+	DEBUG("\n\rSTARTING HTTP...\n\r");	
+		sim80x_HTTP_Start();
+	DEBUG("\n\r    --DONE--\n\r");	
+	//*/
+		
+	//*
+	DEBUG("\n\rGETTING ID BY SERIAL NUMBER...\n\r");
+		if(isConnect==1)
+			myID = GetID();
+		
+			if(myID==0)
+				myID = HAL_RTCEx_BKUPRead(&hrtc, MY_ID_ADDRESS);
+			else
+				HAL_RTCEx_BKUPWrite(&hrtc, MY_ID_ADDRESS, myID);
+			
+		memset(str, NULL, size);
+		snprintf(str, size, "\n\rmyID is \"%d\"", myID);
+		DEBUG(str);
+		DEBUG("\n\r    --DONE--\n\r");	
+	//*/
+
   //*	
 	DEBUG("\n\rGETTING ALL PROGRAMS FROM SERVER...\n\r");
 		HAL_Delay(500);
@@ -470,39 +481,16 @@ int main(void)
 		}
 	DEBUG("\n\r    --DONE--\n\r");
 	//*/
-	
-	//*
-	DEBUG("\n\rGETTING RSSI ANTENNA ...\n\r");
-	if(simCardGprsOk==1)
-	{
-		Sim80x_StatusTypeDef=sim80x_ATC("AT+CSQ\r\n",50);// SIM800 RSSI AT Command
-		if(Sim80x_StatusTypeDef==HAL_OK)
-			{
-			//parsing sim800 response:	
-			startAnswer	= strstr(RxBuffer, "+CSQ:")+5;
-			endAnswer		= strstr(RxBuffer, ",");
-			for(int i=(startAnswer-RxBuffer); i<(endAnswer-RxBuffer); i++)
-				rssiStrValue[i-(startAnswer-RxBuffer)] = RxBuffer[i];	//ContentStr=RSSI value of sim800
-			rssiIntValue= (uint8_t)atoi(rssiStrValue);
-			}
-			else
-			{				
-				 DEBUG( "***\r\n");
-				 DEBUG("RSSI: Can not read RSSI from sim80x\r\n");
-			 	 rssiIntValue=0;
-				 DEBUG( "***\r\n");
-			}
-	}
-	else
-	{
-				 DEBUG( "***\r\n");
-				 DEBUG("SIM GPRS ERROR\r\n");
-			 	 rssiIntValue=0;
-				 DEBUG( "***\r\n");		
-	}
 		
+	//*
+	DEBUG("\n\rGETTING DATE AND TIME...");
+		GET_SAVE_Time();
+		HAL_RTC_GetTime(&hrtc, &Time, RTC_FORMAT_BIN);
+		HAL_RTC_GetDate(&hrtc, &Date, RTC_FORMAT_BIN);
+		snprintf(str,sizeof(str),"\n\r Time: %d/%02d/%02d %02d:%02d:%02d", 2000+Date.Year, Date.Month, Date.Date, Time.Hours, Time.Minutes, Time.Seconds);
+		DEBUG(str);
 	DEBUG("\n\r    --DONE--\n\r");
-	//*/
+	//*/	
 	
 	//*
 	DEBUG("\n\rSTOPING HTTP...\n\r");	
@@ -516,6 +504,7 @@ int main(void)
 		
 	DEBUG("\n\r  <<< INITIALIZING DONE >>>\n\r");
 	HAL_Delay(1000);
+	while(1);
 	
   /* USER CODE END 2 */
 
@@ -2534,7 +2523,104 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	}
 }
 
+/**
+  * @brief  Get Time & Date from "worldtimeapi.org" and save in RTC
+  */
+void GET_SAVE_Time(void){
+	char  	 year[4];					//variables : Save time in RTC 	
+	char  	 month[2];
+	char  	 day_of_month[2];
+	char     day_of_week[1];
+	char  	 hour[2];
+	char 	   minute[2];
+	char  	 second[2];
+	char  	 time_result[400];
+	
+	char     *startAnswer;				//variables : Get time from Server  
+	char     *endAnswer;
+	
+		if (isConnect == 1)		// SIM800 is Active
+		{ 
+			uint8_t try_connect = 0;
+			while(try_connect < 3)			//try 3 time for connect to the site
+			{
+				sim80x_ATC("AT+HTTPPARA=\"URL\",\"http://worldtimeapi.org/api/timezone/asia/tehran/\"\r\n",1000); // Connect to www.worldtimeapi.org and get time
+				sim80x_ATC("AT+HTTPACTION=0\r\n",5000);		  	//request GET_MODE 
+				sim80x_ATC("AT+HTTPREAD\r\n",10000);					//read SIM800 response
+				
+							startAnswer	= strstr(RxBuffer, "{");		// Fetching pure JSON from SIM800 response
+							endAnswer		= strstr(RxBuffer, "}")+1;
+							
+							memset(str, NULL, size);
+							for(int i=(startAnswer-RxBuffer); i<(endAnswer-RxBuffer); i++)
+								str[i-(startAnswer-RxBuffer)] = RxBuffer[i];
+				
+				if(str[2] == 'a' && str[3] == 'b' && str[4] == 'b' && str[5] == 'r' && str[6] == 'e')		// check the site response is valid
+				{
+					try_connect = 5;		// exit from while
+					/*Raw Data-> {"abbreviation":"-03","client_ip":"217.218.17.209","datetime":"2021-03-04T06:16:34.272629-03:00",
+						"day_of_week":4,"day_of_year":63,"dst":false,"dst_from":null,"dst_offset":0,"dst_until":null,
+						"raw_offset":-10800,"timezone":"America/Argentina/Cordoba","unixtime":1614849394,
+						"utc_datetime":"2021-03-04T09:16:34.272629+00:00","utc_offset":"-03:00","week_number":9}*/
+//						DEBUG(str);
+						JSON2Str(time_result, str,"datetime");			//Separate  date_time section
+						JSON2int(day_of_week, str,"day_of_week");		//Fetch Day_of_week
+						
+						DEBUG("\n\rServer Time: ");
+						DEBUG(time_result);										//Show date_time section
+					
+					  memcpy(year,time_result+0,4);   				//Fetch Year
+						memcpy(month,time_result+5,2); 				  //Fetch Month
+						memcpy(day_of_month,time_result+8,2);   //Fetch Day of month
 
+						memcpy(hour,time_result+11,2);  				//Fetch Hour
+						memcpy(minute,time_result+14,2); 			  //Fetch Minute
+						memcpy(second,time_result+17,2);  			//Fetch Second
+
+				//*/	
+					
+				//*
+				DEBUG("\n\rSETTING DATE AND TIME...");	
+						RTC_TimeTypeDef sTime = {0};
+						RTC_DateTypeDef sDate = {0};
+						// Setting Time
+						sTime.Hours   = ((uint8_t) hour[1] - '0')   + 10*((uint8_t) hour[0] - '0');		// Convert Hour parameter
+						sTime.Minutes = ((uint8_t) minute[1] - '0') + 10*((uint8_t) minute[0] - '0'); // Convert Minute parameter
+						sTime.Seconds = ((uint8_t) second[1] - '0') + 10*((uint8_t) second[0] - '0'); // Convert Second parameter
+						sTime.DayLightSaving = RTC_DAYLIGHTSAVING_ADD1H;
+						sTime.StoreOperation = RTC_STOREOPERATION_RESET;
+						if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN) != HAL_OK)						// Set Time
+						{
+							Error_Handler();
+						}
+						// Setting Date
+						sDate.Year	  =  (((uint16_t) year[3] - '0') + 10*((uint16_t) year[2] - '0')+100*((uint16_t) year[1] - '0') + 1000*((uint16_t) year[0] - '0'))-2000; // Convert Year parameter
+						sDate.Month	  = ((uint8_t) month[1] - '0') + 10*((uint8_t) month[0] - '0');								// Convert Month parameter
+						sDate.Date 		= ((uint8_t) day_of_month[1] - '0') + 10*((uint8_t) day_of_month[0] - '0'); // Convert Date parameter
+						
+						sDate.WeekDay = ((uint8_t) day_of_week[0] - '0');																					// Convert WeekDay parameter
+						if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN) != HAL_OK) 					// Set Date
+						{
+							Error_Handler();
+						}
+						// SHOW Device DATE AND TIME 
+						HAL_RTC_GetTime(&hrtc, &Time, RTC_FORMAT_BIN);		// Get time
+						HAL_RTC_GetDate(&hrtc, &Date, RTC_FORMAT_BIN);		// Get date
+						snprintf(str,sizeof(str),"\n\r<<<<<<< Device Time: %d/%02d/%02d %02d:%02d:%02d >>>>>>", 2000+Date.Year, Date.Month, Date.Date, Time.Hours, Time.Minutes, Time.Seconds);
+						DEBUG(str);																				// print time & date in terminal
+				}
+				else
+				{
+					try_connect++;														// Coutn number of try to connect
+					if(try_connect == 3)	// return fail result and exit from try_while
+						DEBUG("\n\r   Server Connection FAILURE.\n\r");	
+				}
+			}					
+ 
+			}
+			else
+				DEBUG("\n\r  SIM800 is not responding.\n\r");
+}
 
 /* USER CODE END 4 */
 
