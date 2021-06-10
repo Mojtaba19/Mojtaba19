@@ -78,7 +78,7 @@ ProcessProgram;
 #define		__BUTTONS_ARE_ENABLE__		1																						// If you want to use external buttons, this value should be 1.
 #define		__IS_3G_MODULE__					0																						// If you use 3G module this value should be 1.
 #define  	__SERIAL_NUMBER						"666"																				// Unique serial number. We use this number to get "land ID" from server.
-#define		__WELCOME_TEXT						"TEST BENCH STARTED"												// The text sent via SMS after reset.
+#define		__WELCOME_TEXT						"WELCOME"												// The text sent via SMS after reset.
 #define		__ON_OFF_CURRENT_THRESH__	1000																				// If the load current (mA) exceeded this limit, it means the load in ON 		
 
 #define		LAST_SYSTEM_RESET_STATUS	  9																					// The address of RTC backup register that using in reset system one time before starting 
@@ -96,12 +96,8 @@ ProcessProgram;
 #define   BUTTONS_NUM								2																						//External BUTTONS number
 //#define 	SERVER_IP									"37.152.181.206"													// Server IP
 #define		SERVER_IP									"ldmpanel.ir"																// Server domain
-//#define 	phone										"+989024264731"
-//#define 	phone										"+989362117764"	// Hasan agha
-//#define		phone											"+989125572257"
-//#define		phone2										"+989213106616"
-//#define 	phone											"+989128504339"
-#define 	phone											"+989395676056"
+#define 	phone										"+989362117764"	// Hasan agha
+//#define 	phone											"+989395676056"
 //#define   Buttons_number						2
 /* USER CODE END PD */
 
@@ -294,11 +290,9 @@ int main(void)
 	DEBUG("\n\r*                                              *");
 	DEBUG("\n\r************************************************\n\r");
 	
-	//*
-
-
+	
 	initializingFlag=1; //initializing seting is starting
-
+  /*
 	DEBUG("\n\r Tim start IT... \n\r");
 		HAL_Delay(250);
 		ssd1306_Init();
@@ -309,7 +303,7 @@ int main(void)
 	//*/
 	
 
-	//*
+	/*
 	DEBUG("\n\rStarting current sensor...");
 		current_start(current_sensor_CallBack, &htim3, &hadc2);
 	DEBUG("\n\r    --DONE--\n\r");
@@ -325,7 +319,7 @@ int main(void)
 	DEBUG("\n\r    --DONE--\n\r");	
 	//*/
 	
-	//*
+	/*
 	DEBUG("\n\rREADING FLOW1 AND FLOW2 FROM MEMORY...");
 		HAL_Delay(500);
 		Flow1=HAL_RTCEx_BKUPRead(&hrtc,1);	
@@ -381,18 +375,12 @@ int main(void)
 	DEBUG("\n\rSMS SETTING...\n\r");
 		SMSSetting();
 	DEBUG("\n\r    --DONE--\n\r");
-		//*/
+	//*/
 	
 	//* 
-	
 	DEBUG("\n\rDeletting All Messages...\n\r");
 	sim80x_ATC("AT+CMGD=1,4\r\n",2000);	
 	DEBUG("\n\r    --DONE--\n\r");
-
-	//*/
-	
-	//*
-	
 	//*/
 	
 	//*
@@ -402,7 +390,8 @@ int main(void)
 	DEBUG("\n\r    --DONE--\n\r");	
 	//*/
 	
-		
+	
+  //*	
 	DEBUG("\n\rGETTING ALL PROGRAMS FROM SERVER...\n\r");
 		HAL_Delay(500);
 		if(isConnect==1){
@@ -413,7 +402,7 @@ int main(void)
 	HAL_Delay(6000);		
 	//*/
 
-	
+	//*
 	DEBUG("\n\rSETTING NEXT ALARM...");
 		HAL_Delay(500);
 		updatePrograms();
@@ -422,9 +411,7 @@ int main(void)
 	DEBUG("\n\r    --DONE--\n\r");	
 	//*/
 
-		
-	
-	
+	//*
 	DEBUG("\n\rGETTING ALL PROCESS PROGRAMS FROM SERVER...\n\r");
 		HAL_Delay(500);
 		if(isConnect==1)
@@ -437,9 +424,7 @@ int main(void)
 	DEBUG("\n\r    --DONE--\n\r");	
 	//*/
 	
-	
-	
-	
+	//*
 	DEBUG("\n\rSETTING NEXT PROCESS PROGRAM ALARM...");
 		HAL_Delay(500);
 		memset(str,NULL,size);
@@ -517,7 +502,9 @@ int main(void)
 	}
 		
 	DEBUG("\n\r    --DONE--\n\r");
-		
+	//*/
+	
+	//*
 	DEBUG("\n\rSTOPING HTTP...\n\r");	
 		sim80x_HTTP_Stop();
 	DEBUG("\n\r    --DONE--\n\r");	
@@ -2546,6 +2533,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		
 	}
 }
+
+
 
 /* USER CODE END 4 */
 
