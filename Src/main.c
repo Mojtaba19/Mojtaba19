@@ -74,7 +74,6 @@ ProcessProgram;
 
 // DEVICE NAME: "ABGIRI"
 
-#define		__FIRSTTIME_PROGRAMMING__	0																						// If you are programming a board for first time, value should be 1.
 #define		__SENSORS_ARE_ENABLE__		0																						// If you want to use sensors, this value should be 1.
 #define		__BUTTONS_ARE_ENABLE__		1																						// If you want to use external buttons, this value should be 1.
 #define		__IS_3G_MODULE__					0																						// If you use 3G module this value should be 1.
@@ -82,8 +81,7 @@ ProcessProgram;
 #define		__WELCOME_TEXT						"TEST BENCH STARTED"												// The text sent via SMS after reset.
 #define		__ON_OFF_CURRENT_THRESH__	1000																				// If the load current (mA) exceeded this limit, it means the load in ON 		
 
-#define   NUMBER_OF_REGISTERD_PHONE_NUMBERS 8
-#define		LAST_SYSTEM_RESET_STATUS	  9																					// The address of RTC backup register storing 
+#define		LAST_SYSTEM_RESET_STATUS	  9																					// The address of RTC backup register that using in reset system one time before starting 
 #define		PROGRAM_ID_ADDRESS				 19																					// The address of RTC backup register storing the next program ID.
 #define		LAST_STATUS_ADDRESS			   10																					// The address of RTC backup register storing the last output status.
 #define		MY_ID_ADDRESS							 18																					// The address of RTC backup register storing the "Land ID".
@@ -154,7 +152,6 @@ uint8_t 						  	rssiIntValue=0;									//include RSSI intiger value .
 
 char										processProgram[size];						//used in processProgramParser
 
-//char										Buttons_processProgram[Buttons_number];
 uint8_t 								LastStatus;											// Stores the last output status
 uint8_t 								get_output_result;							// The result of GetOutput fnc
 uint8_t									SMSisPending=0;									// It is a flag showing whether we want to send SMS or not
@@ -183,8 +180,6 @@ uint8_t									Load_Status = 0;								// If load (e.g. pomp) is powered, this 
 uint8_t									Load_NumberOfTries = 0;					// Number of attemots to turning the load on.
 uint8_t									simCardGprsOk=0;								//simcard gprs is ok. changed in sim80x_HTTP_Start() and used in rssi antenna
 uint8_t									systemResetFlag;                //used for reset the system for one time After the device is turned on
-uint8_t									numberOfRegisteredPhoneNumbers=0;
-uint8_t									smsLevelStatus=0;
 
 /* USER CODE END PV */
 
@@ -278,11 +273,6 @@ int main(void)
 	TH = malloc(2*sizeof(float));
 	DWT_Init();
 	
-	//	HAL_RTCEx_BKUPWrite(&hrtc,1,8260);
-	//	HAL_RTCEx_BKUPWrite(&hrtc,2,8500);
-//			char test_str[50];
-//	sprintf(test_str,"\n\rstatus is: %d\n\r", (uint8_t)HAL_I2C_IsDeviceReady(&hi2c2, SSD1306_I2C_ADDR, 10, 100));
-//	DEBUG(test_str);
 
 
 	if(HAL_RTCEx_BKUPRead(&hrtc,LAST_SYSTEM_RESET_STATUS)==1)//reset system one time before starting
@@ -306,13 +296,9 @@ int main(void)
 	
 	//*
 
-//	  uint8_t tempData[200];
-//		memset(tempData, 255, 100);
-//		ee24_write(&hi2c1, 2000, tempData, 200, 1000);
-//		HAL_RTCEx_BKUPWrite(&hrtc, NUMBER_OF_REGISTERD_PHONE_NUMBERS,0);
-
 
 	initializingFlag=1; //initializing seting is starting
+
 	DEBUG("\n\r Tim start IT... \n\r");
 		HAL_Delay(250);
 		ssd1306_Init();
@@ -322,62 +308,6 @@ int main(void)
 	DEBUG("\n\r    --DONE--\n\r");
 	//*/
 	
-
-#if(__FIRSTTIME_PROGRAMMING__==1)		
-	//*
-	DEBUG("\n\rSETTING DATE AND TIME...");	
-		HAL_Delay(500);
-		RTC_TimeTypeDef sTime = {0};
-		RTC_DateTypeDef sDate = {0};
-		sTime.Hours = 18;
-		sTime.Minutes = 11;
-		sTime.Seconds = 30;
-		sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
-		sTime.StoreOperation = RTC_STOREOPERATION_RESET;
-		if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN) != HAL_OK)
-		{
-		  Error_Handler();
-		}
-		sDate.WeekDay = RTC_WEEKDAY_SUNDAY;
-		sDate.Month = RTC_MONTH_MARCH;
-		sDate.Date = 14;
-		sDate.Year = 2021 - 2000;
-		if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN) != HAL_OK)
-		{
-		  Error_Handler();
-		}
-	DEBUG("\n\r    --DONE--");	
-	//*/
-	
-	//*
-	DEBUG("\n\rCLEARING BACKUP REGISTERS...");
-		HAL_Delay(500);
-		HAL_RTCEx_BKUPWrite(&hrtc, 1, 0);										// FLOW1
-		HAL_RTCEx_BKUPWrite(&hrtc, 2, 0);										//FLOW2
-		HAL_RTCEx_BKUPWrite(&hrtc, PROGRAM_ID_ADDRESS, 0);
-		HAL_RTCEx_BKUPWrite(&hrtc, LAST_STATUS_ADDRESS, 0);
-		HAL_RTCEx_BKUPWrite(&hrtc, MY_ID_ADDRESS, 0);
-	DEBUG("\n\r    --DONE--");
-	//*/
-	
-	//*
-	DEBUG("\n\rCLEARING EEPROM...");
-		HAL_Delay(500); 
-		if(ee24_isConnected(&hi2c1)){
-			ee24_eraseChip(&hi2c1);
-		}
-		else{
-			DEBUG("\n\r ***Connection to EEPROM failed***");
-		}
-	DEBUG("\n\r    --DONE--");
-	//*/
-	
-	
-	DEBUG("\n\r  <<< INITIALIZING DONE >>>\n\r");
-	
-	while(1);
-	
-#endif
 
 	//*
 	DEBUG("\n\rStarting current sensor...");
@@ -428,7 +358,7 @@ int main(void)
 	DEBUG("\n\r    --DONE--\n\r");	
 	//*/
 		
-/*
+
 	DEBUG("\n\rGETTING ID BY SERIAL NUMBER...\n\r");
 		if(isConnect==1)
 			myID = GetID();
@@ -444,9 +374,9 @@ int main(void)
 		memset(str, NULL, size);
 		snprintf(str, size, "\n\rmyID is \"%d\"", myID);
 		DEBUG(str);
-	DEBUG("\n\r    --DONE--\n\r");	
+		DEBUG("\n\r    --DONE--\n\r");	
 
-*/
+
 	//*
 	DEBUG("\n\rSMS SETTING...\n\r");
 		SMSSetting();
@@ -472,7 +402,7 @@ int main(void)
 	DEBUG("\n\r    --DONE--\n\r");	
 	//*/
 	
-	/*	
+		
 	DEBUG("\n\rGETTING ALL PROGRAMS FROM SERVER...\n\r");
 		HAL_Delay(500);
 		if(isConnect==1){
@@ -483,7 +413,7 @@ int main(void)
 	HAL_Delay(6000);		
 	//*/
 
-	/*
+	
 	DEBUG("\n\rSETTING NEXT ALARM...");
 		HAL_Delay(500);
 		updatePrograms();
@@ -492,7 +422,7 @@ int main(void)
 	DEBUG("\n\r    --DONE--\n\r");	
 	//*/
 
-	/*	
+		
 	
 	
 	DEBUG("\n\rGETTING ALL PROCESS PROGRAMS FROM SERVER...\n\r");
@@ -507,8 +437,8 @@ int main(void)
 	DEBUG("\n\r    --DONE--\n\r");	
 	//*/
 	
-	/*
-	//*
+	
+	
 	
 	DEBUG("\n\rSETTING NEXT PROCESS PROGRAM ALARM...");
 		HAL_Delay(500);
@@ -633,40 +563,11 @@ int main(void)
 			snprintf(str,sizeof(str),"Time: %d/%02d/%02d %02d:%02d:%02d -- There is no active Alarm\r\n", 2000+Date.Year, Date.Month, Date.Date, Time.Hours, Time.Minutes, Time.Seconds);
 			DEBUG(str);
 			HAL_Delay(2000);
-			sim80x_Receive_sms();
-		//DEBUG(buttonsStatus[0]);
 		// This section runs each 5 minutes
 	
 		// Abgiri execution:
 		AbGiriProccess();
-				
-		if(action){
-			 uint32_t 							currentTimeStamp = 0;		//used when convert current time to time stamp
-			 struct tm  						currentTime;
-			 currentTime.tm_year	= Date.Year + 2000  - 1900;
-			 currentTime.tm_mon		= Date.Month;
-			 currentTime.tm_mday	= Date.Date;
-			 currentTime.tm_hour	= Time.Hours;
-			 currentTime.tm_min		= Time.Minutes;
-			 currentTime.tm_sec		= Time.Seconds;
-			 currentTime.tm_isdst	= -1;	
-			 currentTimeStamp = mktime(&currentTime);//convert current time to time stamp
-			 HAL_RTCEx_BKUPWrite(&hrtc, LAST_CURRENT_TIME_STAMP, currentTimeStamp);//stor time stamp into eeprom
-				
-			 sim80x_HTTP_Start();
-	//		GetAllPrograms();
-	//		HAL_Delay(5000);
-			GetAllProcessPrograms();
-			get_output_result = GetOutput();
-				/*
-					get_output_result has 5 values:
-						-- 0: Means the connection is lost
-						-- 1: Means connection is stable and there is no change in programs and outputs 
-						-- 2: Means connection is stable and programs are changed
-						-- 3: Means connection is stable and outputs have to be changed
-						-- 4: Means connection is stable and both of programs and outputs have to be changed
-				*/
-			if(processFlag==0){		
+					
 	if(action){
 		 uint32_t 							currentTimeStamp = 0;		//used when convert current time to time stamp
 		 struct tm  						currentTime;
@@ -681,13 +582,8 @@ int main(void)
 	 	 HAL_RTCEx_BKUPWrite(&hrtc, LAST_CURRENT_TIME_STAMP, currentTimeStamp);//stor time stamp into eeprom
 			
 		 sim80x_HTTP_Start();
-//		GetAllPrograms();
-//		HAL_Delay(5000);
-		sim80x_Receive_sms();
 		GetAllProcessPrograms();
-		sim80x_Receive_sms();
 		get_output_result = GetOutput();
-		sim80x_Receive_sms();
 		
 			/*
 				get_output_result has 5 values:
@@ -730,8 +626,8 @@ int main(void)
 						ApplyAction(str2bin(str));
 						memset(SMStext, NULL, 120);
 						snprintf(SMStext, 140, "Output status is: \n| %c | %c | %c | %c |%c | %c |\n\r", str[0], str[1], str[2], str[3],str[4], str[5]);
-						//DEBUG(SMStext);
-						//sim80x_SendSMS(phone, SMStext, 6000);	
+						DEBUG(SMStext);
+						sim80x_SendSMS(phone, SMStext, 6000);	
 					
 						break;
 					
@@ -753,7 +649,6 @@ int main(void)
 			 }
 		  
 			sim80x_Send_Status(SERVER_IP); //ContentStr is the JSON contain RSSI value , OUTPUT Status and external Buttons Status that  post in server
-			sim80x_Receive_sms();
 			rssiIntValue= (uint8_t)atoi(rssiStrValue);//convert rssiStrValue to int
 			if(Sim80x_StatusTypeDef!=HAL_OK)//if sim800 response is not OK to rssi at_command  
 			{				
@@ -934,7 +829,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 	#endif
 	
 	#if(__BUTTONS_ARE_ENABLE__==1)
-		//while((HAL_GPIO_ReadPin(sw2_EXIT_GPIO_Port,sw2_EXIT_Pin) || HAL_GPIO_ReadPin(sw1_EXIT_GPIO_Port,sw1_EXIT_Pin)) && (counter<2000002))
 		while((HAL_GPIO_ReadPin(sw2_EXIT_GPIO_Port,sw2_EXIT_Pin)||HAL_GPIO_ReadPin(sw1_EXIT_GPIO_Port,sw1_EXIT_Pin)) && (counter<2000002))
 			counter++;
 		if(counter>2000000)
@@ -1430,9 +1324,9 @@ uint8_t GetAllProcessPrograms(void){
 	else
 		getProcessProgramsStatus=0;//Get process program  unsuccessful 
 	
-getProcessProgramsStarting=0;
-HAL_TIM_Base_Start_IT(&htim5);//start timer interrupt	
-	HAL_Delay(1000);
+	getProcessProgramsStarting=0;
+	HAL_TIM_Base_Start_IT(&htim5);//start timer interrupt	
+	HAL_Delay(3000);
 return  getProcessProgramsStatus;	
 
 	
@@ -1502,7 +1396,7 @@ void GetAllPrograms(void){
 	}
 	getProgramsStarting=0;
 	HAL_TIM_Base_Start_IT(&htim5);
-	HAL_Delay(1100);
+	HAL_Delay(3000);
 }
 
 
@@ -2288,184 +2182,6 @@ void AbGiriProccess(void){
 	// Take down the current feedback flag:
 	isTimeForCurrentCheck = 0;
 }
-/**
-  * @brief  seperat text of the receive sms from sim800 response
-  * @param  input is sim800 response .
-  */
-void ParsingSMSText(char * RxBuffer){
-		  char*		startAnswer;
-	    char*		endAnswer;
-			uint8_t smsNum;
-			startAnswer	= strstr(RxBuffer, ":")+1;
-		  endAnswer		= strstr(RxBuffer, ",");
-			memset(smsText, NULL, size);
-			for(int i=(startAnswer-RxBuffer); i<(endAnswer-RxBuffer); i++)
-				smsText[i-(startAnswer-RxBuffer)] = RxBuffer[i];
-			smsNum=(uint8_t)atoi(smsText);
-			smsNum=smsNum+1;
-			memset(smsText, NULL, size);
-			sprintf(smsText,"%d,\"REC UNREAD\"",smsNum);
-
-				startAnswer	= strstr(RxBuffer, "\"\",\"")+25;
-				if(strstr(RxBuffer, smsText)!=NULL)
-					endAnswer		= strstr(RxBuffer, smsText)-7;
-				else
-					endAnswer		= strstr(RxBuffer, "OK")-1;
-				memset(smsText, NULL, size);
-				for(int i=(startAnswer-RxBuffer); i<(endAnswer-RxBuffer); i++)
-					smsText[i-(startAnswer-RxBuffer)] = RxBuffer[i];
-				
-
-}
-
-/**
-  * @brief  Delete a registerd phonenumber that stored in EEPROM.
-  * @param  input is the phonenumber that the deletion request was sent.
-  */
-void DeletePhonenumber(char * phone_number )
-{
-	uint8_t tempData[100];
-	memset(ContentStr, NULL, size);
-	numberOfRegisteredPhoneNumbers=HAL_RTCEx_BKUPRead(&hrtc, NUMBER_OF_REGISTERD_PHONE_NUMBERS);
-	for(uint8_t i=0;i<=numberOfRegisteredPhoneNumbers;i++)//searching input phone number
- {
-	ee24_read(&hi2c1, 2000+20*i, tempData, 10, 2000);
-	if( strcmp((char *)tempData,phone_number)==0)
-	{
-		memset(tempData, 255, 100);
-		ee24_write(&hi2c1, 2000+20*i, tempData, 10, 1000);
-		ee24_read(&hi2c1, 2000+20*(i+1), tempData, (numberOfRegisteredPhoneNumbers-i)*10, 2000);
-		sprintf(ContentStr, "\n\r phone number %d : \"%s \" deleted \n\r %d Registed phone numbers are existing.",i+1,phone_number,numberOfRegisteredPhoneNumbers-1);
-		DEBUG(ContentStr);
-		ee24_write(&hi2c1, 2000+20*i, tempData, (numberOfRegisteredPhoneNumbers-i)*10, 1000);
-		numberOfRegisteredPhoneNumbers--;
-		HAL_RTCEx_BKUPWrite(&hrtc, NUMBER_OF_REGISTERD_PHONE_NUMBERS,numberOfRegisteredPhoneNumbers);
-		break;
-	}
- }
-
-}
-/**
-  * @brief  Checks if the phonenumber that the request was sent is registered or not
-  * @param  input is the phonenumber that request was sent.
-	* @retval  return 1 when input phone number is valid and return 0 when input phone numer is unvalid
-  */
-uint8_t CheckingPhonenumber(char * phone_number ){
-	
-		if(ee24_isConnected(&hi2c1))
-			{
-				uint8_t tempData[10];
-				numberOfRegisteredPhoneNumbers=HAL_RTCEx_BKUPRead(&hrtc, NUMBER_OF_REGISTERD_PHONE_NUMBERS);
-				for(int i=0;i<=numberOfRegisteredPhoneNumbers;i++)
-				{
-					ee24_read(&hi2c1, 2000+20*i, tempData, 10, 2000);
-					if( strcmp((char *)tempData,phone_number)==0)
-						return 1;
-				}
-				return 0;			
-			
-		}
-	
-	
-}
-/**
-  * @brief  Register the unregistered phonenumber that SMS "set phonenumber "paasword" " request.
-	* @param  Input is the phonenumber that the registration request was sent. 
-  */
-void RegisteringPhonenumber(char * phone_number)
-{
-		if(ee24_isConnected(&hi2c1))
-		{
-			uint8_t tempData[1];
-			tempData[0]='1';
-			numberOfRegisteredPhoneNumbers=HAL_RTCEx_BKUPRead(&hrtc, NUMBER_OF_REGISTERD_PHONE_NUMBERS);
-			if(numberOfRegisteredPhoneNumbers!=9)
-			{
-				ee24_write(&hi2c1, 2000+numberOfRegisteredPhoneNumbers*20,(uint8_t*) phone_number, 10 , 2000);
-				ee24_write(&hi2c1, 2000+numberOfRegisteredPhoneNumbers*20+10, tempData, 1 , 2000);
-				memset(ContentStr, NULL, size);
-				sprintf(ContentStr, "\n\r phone number %d : \"%s \" Registerd. SMS level : %s \n\r %d Registerd phone numbers are existing. ",numberOfRegisteredPhoneNumbers+1,phone_number,tempData,numberOfRegisteredPhoneNumbers+1);
-				DEBUG(ContentStr);
-				numberOfRegisteredPhoneNumbers++;
-				HAL_RTCEx_BKUPWrite(&hrtc, NUMBER_OF_REGISTERD_PHONE_NUMBERS,numberOfRegisteredPhoneNumbers);
-
-			}
-			else
-				DEBUG("10 phone numbers have been registered. can not register a new phone number");
-		}
-	 else
-		DEBUG("EEPROM ERROR");
-	
-	
-}
-/**
-  * @brief  Reads registerd phone numbers and their sms levels from eeprom and print them
-  */
-void PrintAllphonenumbers(void){
-		
-		if(ee24_isConnected(&hi2c1))
-			{
-				uint8_t tempData[10];
-				numberOfRegisteredPhoneNumbers=HAL_RTCEx_BKUPRead(&hrtc, NUMBER_OF_REGISTERD_PHONE_NUMBERS);
-				for(int i=0;i<numberOfRegisteredPhoneNumbers;i++)
-				{
-					ee24_read(&hi2c1, 2000+20*i, tempData, 10, 2000);
-				  memset(ContentStr, NULL, size);
-				  sprintf(ContentStr, "\n\r %d ) %s ",i+1,tempData);
-				  DEBUG(ContentStr);
-					memset(tempData,NULL, 10);
-					memset(ContentStr, NULL, size);
-					ee24_read(&hi2c1, 2000+20*i+10, tempData,10, 2000);
-				  sprintf(ContentStr, "   SMS Level: %d ",tempData[0]);
-				  DEBUG(ContentStr);
-				}
-		}	
-}
-
-uint8_t ReadPhonenumberSMSlevel(char * phone_number){
-	
-	if(ee24_isConnected(&hi2c1))
-	{
-		uint8_t tempData[11];
-		numberOfRegisteredPhoneNumbers=HAL_RTCEx_BKUPRead(&hrtc, NUMBER_OF_REGISTERD_PHONE_NUMBERS);
-		for(int i=0;i<=numberOfRegisteredPhoneNumbers;i++)
-		{
-					
-	   	memset(tempData,NULL,11);
-			ee24_read(&hi2c1, 2000+20*i, tempData, 11, 2000);
-			if( strstr((char *)tempData,phone_number)!=NULL)
-			{
-				memset(ContentStr, NULL, size);
-				sprintf(ContentStr, "\n\r %d ) %s   SMS Level :%d  ",i+1,phone_number,tempData[10]);
-				DEBUG(ContentStr);
-				return tempData[10];
-			}		
-		}			
-	}	
-}
-void ChangePhonenumberSMSlevel(char * phone_number,uint8_t smsLevel){
-	
- if(ee24_isConnected(&hi2c1))
-	{
-		uint8_t tempData[10];
-		numberOfRegisteredPhoneNumbers=HAL_RTCEx_BKUPRead(&hrtc, NUMBER_OF_REGISTERD_PHONE_NUMBERS);
-		for(int i=0;i<=numberOfRegisteredPhoneNumbers;i++)
-		{
-			ee24_read(&hi2c1, 2000+20*i, tempData, 10, 2000);
-			if( strcmp((char *)tempData,phone_number)==0)
-			{
-				memset(tempData,NULL,10);
-				tempData[0]=smsLevel;
-				ee24_write(&hi2c1, 2000+20*i+10, tempData, 1, 1000);
-				memset(ContentStr, NULL, size);
-				sprintf(ContentStr, "\n\r SMS Level Change \n\r  %d ) %s SMS Level Changed to %d  ",i+1,phone_number,tempData[0]);
-				DEBUG(ContentStr);
-			}		
-		}			
-	}	
-	
-	
-}
 
 /* USER CODE END 4 */
 
@@ -2816,13 +2532,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 					}
 				else
 					{
-//						if(initializingFlag)
-//						{
-//							ssd1306_clear_screen(0,128,20,64);//clear main section of screen
-//							oledState=1;
-//						}
-//						else
-//						{
 					    ssd1306_clear_screen(0,128,20,64);//clear main section of screen and back to state 3 after 5 sec
 							oledState=3;
 //						}
@@ -2830,25 +2539,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 			break;
 		}
 		
-//	}
-//	else if(oledPageNumber==1)
-//	{
-//		 ssd1306_clear_screen(0,128,20,64);//clear main section of screen
-//		 ssd1306_SetCursor(2,27);
-//		 ssd1306_WriteString("Temperature:", Font_7x10, White);
-//		 ssd1306_SetCursor(2,47);
-//		 ssd1306_WriteString("Moisture:", Font_7x10, White);
-//		if(tim5CallbackCounter>18+lastTim5CallbackCounter)
-//		{
-//		  ssd1306_clear_screen(0,128,20,64);//clear main section of screen
-//			oledPageNumber=0;
-//			lastTim5CallbackCounter=tim5CallbackCounter;
-//		}
-//	}
-//		memset(oledStr,NULL, size);
-//		snprintf(oledStr,sizeof(oledStr)," %d/%02d/%02d ", 2000+Date.Year, Date.Month, Date.Date);
-//		ssd1306_SetCursor(50, 0);
-//    ssd1306_WriteString(oledStr, Font_7x10, White);
 
 
 		ssd1306_UpdateScreen();// update oled screnn and apply changes
