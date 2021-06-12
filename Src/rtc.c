@@ -48,7 +48,7 @@ void MX_RTC_Init(void)
   }
 
   /* USER CODE BEGIN Check_RTC_BKUP */
-	#if(__FIRSTTIME_PROGRAMMING__==1)
+//	#if(__FIRSTTIME_PROGRAMMING__==1)
   /* USER CODE END Check_RTC_BKUP */
 
   /** Initialize RTC and set the Time and Date
@@ -101,7 +101,6 @@ void MX_RTC_Init(void)
   {
     Error_Handler();
   }
-	#endif
   /** Enable the WakeUp
   */
   __HAL_RTC_WAKEUPTIMER_CLEAR_FLAG(&hrtc, RTC_FLAG_WUTF);
