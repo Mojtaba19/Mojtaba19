@@ -304,9 +304,10 @@ int main(void)
 
 	initializingFlag=1; //initializing seting is starting
   //*
+	DEBUG("\r\n\r\n\r\n-------------------------------------------------\r\n");
+	DEBUG(						"|                 Tim start IT                  |");
+	DEBUG(				"\r\n-------------------------------------------------\r\n");
 
-
-	DEBUG("\n\r Tim start IT... \n\r");
 		#if(__IS_OLED__==1)
 			HAL_Delay(250);
 			ssd1306_Init();
@@ -314,50 +315,59 @@ int main(void)
 			HAL_TIM_Base_Start_IT(&htim5);
 		#endif
 		HAL_TIM_Base_Start_IT(&htim8);
-	DEBUG("\n\r    --DONE--\n\r");
-
+	DEBUG("\n\r                 -----DONE-----                  \n\r");
 	//*/
 	
 
 	/*
-	DEBUG("\n\rStarting current sensor...");
+	DEBUG("\r\n\r\n\r\n-------------------------------------------------\r\n");
+	DEBUG(						"|           Starting current sensor             |");
+	DEBUG(				"\r\n-------------------------------------------------\r\n");
 		current_start(current_sensor_CallBack, &htim3, &hadc2);
-	DEBUG("\n\r    --DONE--\n\r");
+	  	DEBUG("\n\r                 -----DONE-----                  \n\r");
 	//*/
 	
 	//*
-	DEBUG("\n\rAPPLYING LAST OUTPUT STATUS...");
+	DEBUG("\r\n\r\n\r\n-------------------------------------------------\r\n");
+	DEBUG(						"|         APPLYING LAST OUTPUT STATUS           |");
+	DEBUG(				"\r\n-------------------------------------------------\r\n");
 		HAL_Delay(500);
 		processFlag=HAL_RTCEx_BKUPRead(&hrtc, LAST_PROCESS_FLAG_STATUS);
 		LastStatus = (uint8_t)HAL_RTCEx_BKUPRead(&hrtc, LAST_STATUS_ADDRESS);	
 		ApplyAction(LastStatus);
-	DEBUG("\n\r    --DONE--\n\r");	
+  	DEBUG("\n\r                 -----DONE-----                  \n\r");
 	//*/
 	
 	/*
-	DEBUG("\n\rREADING FLOW1 AND FLOW2 FROM MEMORY...");
+	DEBUG("\r\n\r\n\r\n-------------------------------------------------\r\n");
+	DEBUG(						"|     READING FLOW1 AND FLOW2 FROM MEMORY       |");
+	DEBUG(				"\r\n-------------------------------------------------\r\n");
 		HAL_Delay(500);
 		Flow1=HAL_RTCEx_BKUPRead(&hrtc,1);	
 		Flow2=HAL_RTCEx_BKUPRead(&hrtc,2);	
-	DEBUG("\n\r    --DONE--\n\r");	
+	  DEBUG("\n\r                 -----DONE-----                  \n\r");
 	//*/
 	
 	//*
-	DEBUG("\n\rACTIVATING SIM808 MODULE...\n\r");
+	DEBUG("\r\n\r\n\r\n-------------------------------------------------\r\n");
+	DEBUG(						"|           ACTIVATING SIM808 MODULE            |");
+	DEBUG(				"\r\n-------------------------------------------------\r\n");
 		HAL_Delay(500);
 		isConnect = 1;
 		if(!ACKHandler()){
 			isConnect = 0;
 			DEBUG("\n\r SIM800 is not responding. I'm Offline now.");
 		}
-	DEBUG("\n\r    --DONE--\n\r");	
+  DEBUG("\n\r                 -----DONE-----                  \n\r");
 	//*/
 		
 		
 
 		
 	//*
-	DEBUG("\n\rGETTING RSSI ANTENNA ...\n\r");
+	DEBUG("\r\n\r\n\r\n-------------------------------------------------\r\n");
+	DEBUG(						"|             GETTING RSSI ANTENNA              |");
+	DEBUG(				"\r\n-------------------------------------------------\r\n");
 		Sim80x_StatusTypeDef=sim80x_ATC("AT+CSQ\r\n",50);// SIM800 RSSI AT Command
 		if(Sim80x_StatusTypeDef==HAL_OK)
 			{
@@ -375,83 +385,85 @@ int main(void)
 				 rssiIntValue=0;
 				 DEBUG( "***\r\n");
 			}
-	DEBUG("\n\r    --DONE--\n\r");
+  DEBUG("\n\r                 -----DONE-----                  \n\r");
 	//*/
 	
 			
 	//*
-	DEBUG("\n\rSMS SETTING...\n\r");
+	DEBUG("\r\n\r\n\r\n-------------------------------------------------\r\n");
+	DEBUG(						"|                  SMS SETTING                  |");
+	DEBUG(				"\r\n-------------------------------------------------\r\n");
 		SMSSetting();
-	DEBUG("\n\r    --DONE--\n\r");
+  DEBUG("\n\r                 -----DONE-----                  \n\r");
 	//*/
 	
 	//* 
-	DEBUG("\n\rDeletting All Messages...\n\r");
+	DEBUG("\r\n\r\n\r\n-------------------------------------------------\r\n");
+	DEBUG(						"|            Deletting All Messages             |");
+	DEBUG(				"\r\n-------------------------------------------------\r\n");
 		sim80x_ATC("AT+CMGD=1,4\r\n",2000);	
-	DEBUG("\n\r    --DONE--\n\r");
+  DEBUG("\n\r                 -----DONE-----                  \n\r");
 	//*/
 	
 	//*
-	DEBUG("\n\rSENDING SMS...\n\r");
+	DEBUG("\r\n\r\n\r\n-------------------------------------------------\r\n");
+	DEBUG(						"|                 SENDING SMS                   |");
+	DEBUG(				"\r\n-------------------------------------------------\r\n");
 		HAL_Delay(500);
 		sim80x_SendSMS(phone,__WELCOME_TEXT,6000);
-	DEBUG("\n\r    --DONE--\n\r");	
+  DEBUG("\n\r                 -----DONE-----                  \n\r");
 	//*/
 	
 	
 	//*
-	DEBUG("\n\rSTARTING HTTP...\n\r");	
+	DEBUG("\r\n\r\n\r\n-------------------------------------------------\r\n");
+	DEBUG(						"|                 STARTING HTTP                 |");
+	DEBUG(				"\r\n-------------------------------------------------\r\n");
 		sim80x_HTTP_Start();
-	DEBUG("\n\r    --DONE--\n\r");	
+  DEBUG("\n\r                 -----DONE-----                  \n\r");
 	//*/
 		
 		
 	//*
-	DEBUG("\n\rGETTING ID & LAND_ID...\n\r");
+	DEBUG("\r\n\r\n\r\n-------------------------------------------------\r\n");
+	DEBUG(						"|             GETTING ID & LAND_ID              |");
+	DEBUG(				"\r\n-------------------------------------------------\r\n");
 		Get_SAVE_ID();
 		myID = (uint16_t)atoi(RID_land);			// Save Land ID in myID variable
-	DEBUG("\n\r    --DONE--\n\r");
-	//*/
-	
-	
-	//*
-	DEBUG("\n\rGETTING ID BY SERIAL NUMBER...\n\r");
-		if(isConnect==1)
-			myID = GetID();
-		
-			if(myID==0)
-				myID = HAL_RTCEx_BKUPRead(&hrtc, MY_ID_ADDRESS);
-			else
-				HAL_RTCEx_BKUPWrite(&hrtc, MY_ID_ADDRESS, myID);
-			
-		memset(str, NULL, size);
-		snprintf(str, size, "\n\rmyID is \"%d\"", myID);
-		DEBUG(str);
-		DEBUG("\n\r    --DONE--\n\r");	
+//		HAL_RTCEx_BKUPWrite(&hrtc, MY_ID_ADDRESS, myID);   //this line used in old GET_ID section
+//		myID = HAL_RTCEx_BKUPRead(&hrtc, MY_ID_ADDRESS);   //this line used in old GET_ID section
+  DEBUG("\n\r                 -----DONE-----                  \n\r");
 	//*/
 
+
   //*	
-	DEBUG("\n\rGETTING ALL PROGRAMS FROM SERVER...\n\r");
+	DEBUG("\r\n\r\n\r\n-------------------------------------------------\r\n");
+	DEBUG(						"|       GETTING ALL PROGRAMS FROM SERVER        |");
+	DEBUG(				"\r\n-------------------------------------------------\r\n");
 		HAL_Delay(500);
 		if(isConnect==1){
 			GetAllPrograms();
 			AlarmIsSet = 0;
 		}	
-	DEBUG("\n\r    --DONE--\n\r");
+  DEBUG("\n\r                 -----DONE-----                  \n\r");
 	HAL_Delay(6000);		
 	//*/
 
 	//*
-	DEBUG("\n\rSETTING NEXT ALARM...");
+	DEBUG("\r\n\r\n\r\n-------------------------------------------------\r\n");
+	DEBUG(						"|              SETTING NEXT ALARM               |");
+	DEBUG(				"\r\n-------------------------------------------------\r\n");
 		HAL_Delay(500);
 		updatePrograms();
 		SetNextAlarm(&hrtc);
 		AlarmIsSet = 0;
-	DEBUG("\n\r    --DONE--\n\r");	
+  DEBUG("\n\r                 -----DONE-----                  \n\r");
 	//*/
 
 	//*
-	DEBUG("\n\rGETTING ALL PROCESS PROGRAMS FROM SERVER...\n\r");
+	DEBUG("\r\n\r\n\r\n-------------------------------------------------\r\n");
+	DEBUG(						"|    GETTING ALL PROCESS PROGRAMS FROM SERVER   |");
+	DEBUG(				"\r\n-------------------------------------------------\r\n");
 		HAL_Delay(500);
 		if(isConnect==1)
 	 {
@@ -460,11 +472,13 @@ int main(void)
 			else
 				DEBUG("ERROR in GetAllProcessPrograms ");
 		}	
-	DEBUG("\n\r    --DONE--\n\r");	
+  DEBUG("\n\r                 -----DONE-----                  \n\r");
 	//*/
 	
 	//*
-	DEBUG("\n\rSETTING NEXT PROCESS PROGRAM ALARM...");
+	DEBUG("\r\n\r\n\r\n-------------------------------------------------\r\n");
+	DEBUG(						"|      SETTING NEXT PROCESS PROGRAM ALARM       |");
+	DEBUG(				"\r\n-------------------------------------------------\r\n");
 		HAL_Delay(500);
 		memset(str,NULL,size);
 		processFlag=HAL_RTCEx_BKUPRead(&hrtc, LAST_PROCESS_FLAG_STATUS);//read last process flag from eeprom
@@ -507,30 +521,32 @@ int main(void)
 			DEBUG("\n\r We do not have any unfinished event\n\r");
 			unfinishedEventFlag=0;
 		}
-	DEBUG("\n\r    --DONE--\n\r");
+  DEBUG("\n\r                 -----DONE-----                  \n\r");
 	//*/
 		
 	//*
-	DEBUG("\n\rGETTING DATE AND TIME...");
+	DEBUG("\r\n\r\n\r\n-------------------------------------------------\r\n");
+	DEBUG(						"|             GETTING DATE AND TIME             |");
+	DEBUG(				"\r\n-------------------------------------------------\r\n");
 		GET_SAVE_Time();
 		HAL_RTC_GetTime(&hrtc, &Time, RTC_FORMAT_BIN);
 		HAL_RTC_GetDate(&hrtc, &Date, RTC_FORMAT_BIN);
 		snprintf(str,sizeof(str),"\n\r Time: %d/%02d/%02d %02d:%02d:%02d", 2000+Date.Year, Date.Month, Date.Date, Time.Hours, Time.Minutes, Time.Seconds);
 		DEBUG(str);
-	DEBUG("\n\r    --DONE--\n\r");
+  DEBUG("\n\r                 -----DONE-----                  \n\r");
 	//*/	
 	
 	//*
 	DEBUG("\n\rSTOPING HTTP...\n\r");	
 		sim80x_HTTP_Stop();
-	DEBUG("\n\r    --DONE--\n\r");	
+  DEBUG("\n\r                 -----DONE-----                  \n\r");
 	//*/
 	
 	HAL_Delay(6000);
 	initializingFlag=0; //initializing seting done	
 
 		
-	DEBUG("\n\r  <<< INITIALIZING DONE >>>\n\r");
+	DEBUG("\n\r-----------<<< INITIALIZING DONE >>>-----------\n\r");
 	HAL_Delay(1000);
 	while(1);
 	
@@ -2340,14 +2356,8 @@ void Get_SAVE_ID(void){
 					{
 						try_connect = 5;										// exit from while
 									
-						DEBUG("\n\r-->");
-						DEBUG(str);															// show server response 
-						DEBUG("\n\r");
-						ee24_write(&hi2c1,0,(uint8_t *)get_id,5,100);
-						ee24_write(&hi2c1,5,(uint8_t *)get_land_id,5,100) ;
 						JSON2int(get_id, str,"id");							// Fetch ID
 						JSON2int(get_land_id, str,"land");			// Fetch Land ID
-						
 						ee24_read(&hi2c1,0,(uint8_t *)RID,5,100);					// Read ID froem EEPROM
 						ee24_read(&hi2c1,5,(uint8_t *)RID_land,5,100);	  // Read Land_ID froem EEPROM
 						if( (strcmp(get_id, RID) == 0) || (strcmp(get_land_id, RID_land) == 0))			//check there is ID and Land_ID in EEPROM
@@ -2365,9 +2375,9 @@ void Get_SAVE_ID(void){
 						}
 								ee24_read(&hi2c1,0,(uint8_t *)RID,5,100);				// Read ID froem EEPROM
 								ee24_read(&hi2c1,5,(uint8_t *)RID_land,5,100);	// Read Land_ID froem EEPROM
-								DEBUG("<<<<<<<<<<<<<<<<<<<< ID : ");
+								DEBUG("<<<<<<<<<<<<<<<<<< ID : ");
 								DEBUG(RID);																			// Print ID in terminal
-								DEBUG(" >>>>>>>>>>>>>>>>>>>>\n\r");
+								DEBUG(" >>>>>>>>>>>>>>>>>>>>>>\n\r");
 								
 								DEBUG("<<<<<<<<<<<<<<<<Land ID : ");
 								DEBUG(RID_land);																// Print Land ID in terminal
