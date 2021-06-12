@@ -529,15 +529,13 @@ int main(void)
 	DEBUG(						"|             GETTING DATE AND TIME             |");
 	DEBUG(				"\r\n-------------------------------------------------\r\n");
 		GET_SAVE_Time();
-		HAL_RTC_GetTime(&hrtc, &Time, RTC_FORMAT_BIN);
-		HAL_RTC_GetDate(&hrtc, &Date, RTC_FORMAT_BIN);
-		snprintf(str,sizeof(str),"\n\r Time: %d/%02d/%02d %02d:%02d:%02d", 2000+Date.Year, Date.Month, Date.Date, Time.Hours, Time.Minutes, Time.Seconds);
-		DEBUG(str);
   DEBUG("\n\r                 -----DONE-----                  \n\r");
 	//*/	
 	
 	//*
-	DEBUG("\n\rSTOPING HTTP...\n\r");	
+	DEBUG("\r\n\r\n\r\n-------------------------------------------------\r\n");
+	DEBUG(						"|                   STOPING HTTP                |");
+	DEBUG(				"\r\n-------------------------------------------------\r\n");
 		sim80x_HTTP_Stop();
   DEBUG("\n\r                 -----DONE-----                  \n\r");
 	//*/
@@ -548,7 +546,7 @@ int main(void)
 		
 	DEBUG("\n\r-----------<<< INITIALIZING DONE >>>-----------\n\r");
 	HAL_Delay(1000);
-	while(1);
+//	while(1);
 	
   /* USER CODE END 2 */
 
@@ -2360,7 +2358,7 @@ void Get_SAVE_ID(void){
 						JSON2int(get_land_id, str,"land");			// Fetch Land ID
 						ee24_read(&hi2c1,0,(uint8_t *)RID,5,100);					// Read ID froem EEPROM
 						ee24_read(&hi2c1,5,(uint8_t *)RID_land,5,100);	  // Read Land_ID froem EEPROM
-						if( (strcmp(get_id, RID) == 0) || (strcmp(get_land_id, RID_land) == 0))			//check there is ID and Land_ID in EEPROM
+						if( (strcmp(get_id, RID) == 0) && (strcmp(get_land_id, RID_land) == 0))			//check there is ID and Land_ID in EEPROM
 						{
 							DEBUG("\n\r<<<<<< ID & Land_ID There are in EEPROM >>>>>>>\n\r");
 						}
