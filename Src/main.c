@@ -764,9 +764,6 @@ static void MX_NVIC_Init(void)
   /* EXTI3_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(EXTI3_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI3_IRQn);
-  /* EXTI4_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(EXTI4_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI4_IRQn);
   /* EXTI9_5_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
@@ -847,7 +844,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 	#endif
 	
 	#if(__BUTTONS_ARE_ENABLE__==1)
-		while((HAL_GPIO_ReadPin(sw2_EXIT_GPIO_Port,sw2_EXIT_Pin)||HAL_GPIO_ReadPin(sw1_EXIT_GPIO_Port,sw1_EXIT_Pin)) && (counter<2000002))
+		while((HAL_GPIO_ReadPin(SW2_GPIO_Port,SW2_Pin)||HAL_GPIO_ReadPin(SW1_GPIO_Port,SW1_Pin)) && (counter<2000002))
 			counter++;
 		if(counter>2000000)
 		{	
@@ -874,7 +871,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 					buttonId=1;
 					SetProcessProgramsAlarm(&hrtc);//Button 2 Status =1 and we must aplly its first event action and set alarm for anothers.
 				}
-				while(HAL_GPIO_ReadPin(sw1_EXIT_GPIO_Port,sw1_EXIT_Pin));
+				while(HAL_GPIO_ReadPin(SW1_GPIO_Port,SW1_Pin));
 			}
 			
 			if(GPIO_Pin == GPIO_PIN_5)//button 1 interrupt
@@ -899,7 +896,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 					buttonId=2;
 					SetProcessProgramsAlarm(&hrtc);//Button 2 Status =1 and we must aplly its first event action and set alarm for anothers.
 				}
-				while(HAL_GPIO_ReadPin(sw2_EXIT_GPIO_Port, sw2_EXIT_Pin));
+				while(HAL_GPIO_ReadPin(SW2_GPIO_Port,SW2_Pin));
 			}
 		  memset(str,NULL,size);
 			sprintf(str,"\n\r buttonsStatus: %d%d \n\r",buttonsStatus[1],buttonsStatus[0]);

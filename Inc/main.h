@@ -70,6 +70,18 @@ void		DEBUG(char* input);
 #define NSS_GPIO_Port GPIOB
 #define RST_Pin GPIO_PIN_9
 #define RST_GPIO_Port GPIOD
+#define SW_Light3_Pin GPIO_PIN_2
+#define SW_Light3_GPIO_Port GPIOG
+#define SW_Light2_Pin GPIO_PIN_3
+#define SW_Light2_GPIO_Port GPIOG
+#define SW_Light1_Pin GPIO_PIN_4
+#define SW_Light1_GPIO_Port GPIOG
+#define SW2_Pin GPIO_PIN_8
+#define SW2_GPIO_Port GPIOG
+#define SW2_EXTI_IRQn EXTI9_5_IRQn
+#define SW1_Pin GPIO_PIN_9
+#define SW1_GPIO_Port GPIOC
+#define SW1_EXTI_IRQn EXTI9_5_IRQn
 #define SIM_PWR_Pin GPIO_PIN_8
 #define SIM_PWR_GPIO_Port GPIOA
 #define SIM_TX_Pin GPIO_PIN_9
@@ -92,12 +104,6 @@ void		DEBUG(char* input);
 #define relay3_GPIO_Port GPIOD
 #define relay4_Pin GPIO_PIN_3
 #define relay4_GPIO_Port GPIOD
-#define sw1_EXIT_Pin GPIO_PIN_4
-#define sw1_EXIT_GPIO_Port GPIOD
-#define sw1_EXIT_EXTI_IRQn EXTI4_IRQn
-#define sw2_EXIT_Pin GPIO_PIN_5
-#define sw2_EXIT_GPIO_Port GPIOD
-#define sw2_EXIT_EXTI_IRQn EXTI9_5_IRQn
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
