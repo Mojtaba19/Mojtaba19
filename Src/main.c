@@ -64,7 +64,6 @@ typedef struct ProcessProgram_t{
 /* 4 */	uint8_t  Second[10];	
 /* 5 */	uint8_t  spouts[10];
 /* 6 */	uint8_t  events_count;	
-	
 }
 ProcessProgram;
 /* USER CODE END PTD */
@@ -99,7 +98,6 @@ ProcessProgram;
 #define		SERVER_IP									"ldmpanel.ir"																// Server domain
 #define 	phone										"+989140436272"	// Hasan agha
 //#define 	phone											"+9891404"
-//#define   Buttons_number						2
 
 #define 	U_ID       						    0x1FFF7A10 																	// Unique device ID register address
 #define		nmbr_try_connect_site     3																						// Specify how many try to connect to the site
@@ -184,7 +182,7 @@ uint8_t									systemResetFlag;                //used for reset the system for 
 char 										RID[5];													// Read ID from eeprom(used for debug)
 char 										RID_land[5];										// Read Land_ID from eeprom(used for debug)
 char 										serial_number_string[12] = {0,0,0,0,0,0,0,0,0,0,0,0}; // Unique serial number. We use this number to get "ID" from server.
-uint32_t 								unique_device_ID[3];
+uint32_t 								unique_device_ID[3];						// 96 bit micro controller unique id
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -201,22 +199,24 @@ void							writeProg(Program* prog);
 void 							writeProcessProg(ProcessProgram* processProg);
 Program						readProg(uint8_t progID);
 ProcessProgram    readProcessProg(uint8_t progID);
+void							deleteAllPrograms(void);
 void							deleteAllProcessPrograms(void);
 void							deleteProg(Program* prog);
 void 							GetAllPrograms(void);
+uint8_t						GetAllProcessPrograms(void);
 void							ApplyAction(uint8_t OutputStatus);
 Program						ProgramParser(char* input_str);
 ProcessProgram    processProgramParser(char* input_str);
 void							PrintProgram(Program input);
+void							PrintAllPrograms(void);
 void 							PrintAllProcessProgram(int i);
 void							SetAlarm(RTC_HandleTypeDef* rtc);
 uint8_t 					SetProcessProgramsAlarm(RTC_HandleTypeDef* rtc);
 void							SetNextAlarm(RTC_HandleTypeDef* rtc);
 void 							SetNextAlarm_Processprograms(RTC_HandleTypeDef* rtc);
 void							updatePrograms(void);
-uint8_t						GetAllProcessPrograms(void);
-void							deleteAllPrograms(void);
-void							PrintAllPrograms(void);
+
+
 uint8_t						JSON2Str(char* result, char* raw_input, char* key);
 uint8_t						JSON2int(char* result, char* raw_input, char* key);
 uint8_t						JSON2Str_nested(char* result, char* raw_input, char* key_parent, char* key_child);
@@ -290,7 +290,7 @@ int main(void)
 	HAL_RTCEx_BKUPWrite(&hrtc, LAST_SYSTEM_RESET_STATUS, 1);
 	
 	DEBUG("\n\r************************************************");
-	DEBUG("\n\r*            Petus: Baghyar - V2.2             *");
+	DEBUG("\n\r*            Petus: Baghyar                    *");
 	DEBUG("\n\r************************************************");
 	DEBUG("\n\r*   Programed By :   Land Development Message  *");
 	DEBUG("\n\r*           Date :   1399/08/22                *");
@@ -546,7 +546,6 @@ int main(void)
 		
 	DEBUG("\n\r-----------<<< INITIALIZING DONE >>>-----------\n\r");
 	HAL_Delay(1000);
-//	while(1);
 	
   /* USER CODE END 2 */
 
@@ -597,11 +596,11 @@ int main(void)
 		 currentTime.tm_sec		= Time.Seconds;
 		 currentTime.tm_isdst	= -1;	
 		 currentTimeStamp = mktime(&currentTime);//convert current time to time stamp
-	 	 HAL_RTCEx_BKUPWrite(&hrtc, LAST_CURRENT_TIME_STAMP, currentTimeStamp);//stor time stamp into eeprom
+	 	 HAL_RTCEx_BKUPWrite(&hrtc, LAST_CURRENT_TIME_STAMP, currentTimeStamp);//stor time stamp into baackup register
 			
 		 sim80x_HTTP_Start();
-		GetAllProcessPrograms();
-		get_output_result = GetOutput();
+		 GetAllProcessPrograms();
+		 get_output_result = GetOutput();
 		
 			/*
 				get_output_result has 5 values:
